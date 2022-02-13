@@ -32,7 +32,7 @@ var e = String, r = Object.prototype, a = r => {
         return "R" + n(c.source + "," + c.flags, i, u, l);
 
       case "Function":
-        return "E" + n(e(l ? l(c) : c.name), i, u, l);
+        return "E" + n(e(l && l(c) || c.name), i, u, l);
 
       case "Array":
         var o, f = "", h = 0;
@@ -260,7 +260,7 @@ var e = String, r = Object.prototype, a = r => {
         return new RegExp(a.slice(0, r = a.lastIndexOf(",")), a.slice(r + 1));
 
       default:
-        return t ? t(a) : "%" + a + "%";
+        return t && t(a) || "%" + a + "%";
     }
 }, A = {
     build: u,

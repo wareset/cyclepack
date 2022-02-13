@@ -40,7 +40,7 @@ const _run_ = (
     case 'RegExp':
       return 'R' + _run_(v.source + ',' + v.flags, cache, id, cb)
     case 'Function':
-      return 'E' + _run_(__String__(cb ? cb(v) : v.name), cache, id, cb)
+      return 'E' + _run_(__String__(cb && cb(v) || v.name), cache, id, cb)
     case 'Array': {
       let res = ''
       let i = 0, j: number
@@ -265,12 +265,12 @@ const iksf = (ik: any, v: any, proxyForFunctions: any): any => {
     case 'H': return Symbol(v)
     case 'S': return new __String__(v)
     case 'R': return new RegExp(v.slice(0, ik = v.lastIndexOf(',')), v.slice(ik + 1))
-    default: return proxyForFunctions ? proxyForFunctions(v) : `%${v}%`
+    default: return proxyForFunctions && proxyForFunctions(v) || `%${v}%`
   }
 }
 
-export type TypeBuildProxyForFunctions = (fn: Function) => string
-export type TypeParseProxyForFunctions = (fname: string) => any
+export type TypeBuildProxyForFunctions = (fn: Function) => string | null | undefined
+export type TypeParseProxyForFunctions = (fname: string) => Function | null | undefined
 
 export { build, parse }
 export default { build, parse }

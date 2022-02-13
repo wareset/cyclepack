@@ -1,7 +1,7 @@
 # cyclepack
 Packing and unpacking of built-in objects while preserving instances
 
-It is needed to transfer large and complex data between the client and the server, or between worckers
+It is needed to transfer large and complex data between the client and the server, or between workers
 
 It seems that all standard JavaScript objects are supported
 
@@ -27,19 +27,19 @@ object.object = object[0] = object
 texts.numbers = numbers.object = set
 
 // it turned out to be a very strange object
-const FINAL_OBJECT = [set, object, map, set, object, array]
+const FINAL = [set, object, map, set, object, array]
 
 // let's create a string from it
-const packedString = cyclepack.build(FINAL_OBJECT)
+const packedString = cyclepack.build(FINAL)
 console.log(packedString)
 // [T(b,{"numbers":[[[42,m,LQ2343,34,,,c,-y,424,,24,,ae,22,e]],"object":s]},[,,,"some",v,,,,v,,Qy,"texts":ai,u:s],I16"0,0",s),{Qa:an,"array":[{al:ai},{"regex":R"\\s[^,]+,gi"},,,,au,n,{u:v,"date":D1644779546922},an,aq],al:ai,"set":s,"map":M({ap:aq}:s,{ba:s}:ai,s:s),at:au,ax:ay,u:v,ah:an},bc,s,an,aq]
 
 // let's restore our object
 const unpackedObject = cyclepack.parse(packedString)
 
-// let's restore our object
+// compare objects (jest)
 test('Compare:', () => {
-  expect(unpackedObject).toEqual(FINAL_OBJECT) // there will be true
+  expect(unpackedObject).toEqual(FINAL) // there will be true
 })
 ```
 
@@ -62,20 +62,24 @@ But, to identify the functions, the `cyclepack` has a second parameter `proxyFor
 import cyclepack from 'cyclepack';
 
 const someFunc = () => {}
+const someFunc2 = () => {}
 
-const packed = cyclepack.build(someFunc, (func) => {
+const packed = cyclepack.build([someFunc, someFunc2], (func) => {
   if (func === someFunc) return 'FN_UNIQUE_ID'
-  return func.name
+  return null
 })
-console.log(packed) // E"FN_UNIQUE_ID"
+console.log(packed) // [E"FN_UNIQUE_ID",E"someFunc2"]
 
 const unpacked = cyclepack.parse(packed, (fname) => {
   if (fname === 'FN_UNIQUE_ID') return someFunc
-  return fname
+  return null
 })
-console.log(unpacked) // %someFunc%
+console.log(unpacked) // [someFunc, '%someFunc2%']
 
 test('Compare:', () => {
-  expect(unpacked).toEqual(someFunc) // there will be true
+  expect(unpacked).toEqual([someFunc, '%someFunc2%']) // there will be true
 })
 ```
+
+## License
+[MIT](LICENSE)

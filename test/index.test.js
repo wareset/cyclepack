@@ -97,6 +97,7 @@ test('ArrayBuffer:', () => {
 
 test('Functions:', () => {
   const someFunc = () => {}
+  const someFunc2 = () => {}
 
   const stringWithoutProxy = build(someFunc)
   // console.log(stringWithoutProxy)
@@ -104,17 +105,17 @@ test('Functions:', () => {
   // console.log(unpackWithoutProxy)
   expect(unpackWithoutProxy).toEqual('%someFunc%')
 
-  const packed = build(someFunc, (func) => {
+  const packed = build([someFunc, someFunc2], (func) => {
     if (func === someFunc) return 'FN_UNIQUE_ID'
-    return func.name
+    return null
   })
 
   const unpacked = parse(packed, (fname) => {
     if (fname === 'FN_UNIQUE_ID') return someFunc
-    return fname
+    return null
   })
 
-  // console.log(cached)
-  // console.log(newarr)
-  expect(someFunc).toEqual(unpacked)
+  // console.log(packed)
+  // console.log(unpacked)
+  expect(unpacked).toEqual([someFunc, '%someFunc2%'])
 })
