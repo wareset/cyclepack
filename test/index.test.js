@@ -10,9 +10,11 @@ test('Base:', () => {
   const symbol = Symbol(42)
   expect(thereandback(symbol).toString()).toEqual(symbol.toString())
 
-  const texts = ['some', '\0`\ntext\t"\t', '']
+  expect(thereandback('')).toEqual('')
   expect(thereandback('42')).toEqual('42')
+  const texts = ['some', '\0`\ntext\t"\t', '']
   expect(thereandback(texts)).toEqual(texts)
+  expect(thereandback({ q: '' })).toEqual({ q: '' })
 
   expect(thereandback(42)).toEqual(42)
   const numbers = [NaN, -Infinity, 42e42, 2343n]
