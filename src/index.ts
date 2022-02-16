@@ -17,30 +17,31 @@ const stringifyFast = (s: any): string => '"' + s + '"'
 const _run_ = (
   v: any, cache: Map<any, string>, id: [number], cb: Function | null
 ): string => {
-  if (cache.has(v)) return cache.get(v)!
+  const key = cache.get(v)
+  if (key) return key!
   cache.set(v, setId(id))
   switch (__OPROTO__.toString.call(v).slice(8, -1)) {
     case 'Boolean':
       return 'B' + +v
     case 'Number':
       return v === +v
-        ? v < 0 ? '-' + _run_(-v, cache, id, cb) : v
+        ? v < 0 ? '-' + _run_(-v, cache, id, cb) : '' + v
         : 'N' + _run_(+v, cache, id, cb)
       // return v === +v ? '' + v : 'N' + _run_(+v, cache, id, cb)
     case 'String':
-      return v === (v = __String__(v))
-        ? v !== __String__(+v) ? JSON.stringify(v) : 'Q' + _run_(+v, cache, id, cb)
-        : 'S' + _run_(v, cache, id, cb)
+      return v === '' + v
+        ? v !== '' + +v ? JSON.stringify(v) : 'Q' + _run_(+v, cache, id, cb)
+        : 'S' + _run_('' + v, cache, id, cb)
     case 'Symbol':
       return 'H' + _run_(v.toString().slice(7, -1), cache, id, cb)
     case 'BigInt':
-      return 'L' + _run_(__String__(v), cache, id, cb)
+      return 'L' + _run_('' + v, cache, id, cb)
     case 'Date':
       return 'D' + _run_(v.getTime(), cache, id, cb)
     case 'RegExp':
       return 'R' + _run_(v.source + ',' + v.flags, cache, id, cb)
     case 'Function':
-      return 'E' + _run_(__String__(cb && cb(v) || v.name), cache, id, cb)
+      return 'E' + _run_('' + (cb && cb(v) || v.name), cache, id, cb)
     case 'Array': {
       let res = ''
       let i = 0, j: number
@@ -113,7 +114,7 @@ const DEFS_FOR_STRINGIFY = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, null, void 0, NaN, tru
 const DEFS_FOR_PARSE = DEFS_FOR_STRINGIFY.map((v: any) => [v[1], v[0]])
 
 const build = (v: any, proxyForFunctions?: TypeBuildProxyForFunctions): string =>
-  __String__(_run_(v, new Map(DEFS_FOR_STRINGIFY), [17], proxyForFunctions!))
+  _run_(v, new Map(DEFS_FOR_STRINGIFY), [17], proxyForFunctions!)
 
 const REG_LETTER = /[a-z]/
 const REG_SYSTEM = /["/{}[\]():,]/
@@ -257,7 +258,7 @@ const parse = (a: string, proxyForFunctions?: TypeParseProxyForFunctions): any =
 const iksf = (ik: any, v: any, proxyForFunctions: any): any => {
   switch (ik) {
     case '-': return -+v
-    case 'Q': return __String__(v)
+    case 'Q': return '' + v
     case 'L': return BigInt(v)
     case 'D': return new Date(+v)
     // eslint-disable-next-line no-new-wrappers
