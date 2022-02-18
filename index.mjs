@@ -27,7 +27,7 @@ var e = String, r = Object.prototype, a = r => {
         return "L" + n("" + e, c, i, u);
 
       case "Date":
-        return "D" + n(e.toJSON(), c, i, u);
+        return "D" + n(e.getTime(), c, i, u);
 
       case "RegExp":
         return "R" + n(e.source + "," + e.flags, c, i, u);
@@ -246,7 +246,7 @@ var e = String, r = Object.prototype, a = r => {
         return BigInt(a);
 
       case "D":
-        return new Date(a);
+        return new Date(+a);
 
       case "N":
         return new Number(a);
