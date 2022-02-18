@@ -1,6 +1,6 @@
 {
   "name": "cyclepack",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Packing and unpacking of built-in objects while preserving instances",
   "keywords": [
     "json",

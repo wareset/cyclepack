@@ -37,7 +37,7 @@ const _run_ = (
     case 'BigInt':
       return 'L' + _run_('' + v, cache, id, cb)
     case 'Date':
-      return 'D' + _run_(v.getTime(), cache, id, cb)
+      return 'D' + _run_(v.toJSON(), cache, id, cb)
     case 'RegExp':
       return 'R' + _run_(v.source + ',' + v.flags, cache, id, cb)
     case 'Function':
@@ -260,7 +260,7 @@ const iksf = (ik: any, v: any, proxyForFunctions: any): any => {
     case '-': return -+v
     case 'Q': return '' + v
     case 'L': return BigInt(v)
-    case 'D': return new Date(+v)
+    case 'D': return new Date(v)
     // eslint-disable-next-line no-new-wrappers
     case 'N': return new Number(v)
     case 'H': return Symbol(v)
