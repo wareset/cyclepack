@@ -111,15 +111,16 @@ const _run_ = (
 const DEFS_FOR_STRINGIFY = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, null, void 0, NaN, true, false, 1 / 0, -1 / 0]
   .map((v, k) => [v, setId([k])]) as any
 
-const DEFS_FOR_PARSE = DEFS_FOR_STRINGIFY.map((v: any) => [v[1], v[0]])
-
 const build = (v: any, proxyForFunctions?: TypeBuildProxyForFunctions): string =>
   _run_(v, new Map(DEFS_FOR_STRINGIFY), [17], proxyForFunctions!)
 
 const REG_LETTER = /[a-z]/
 const REG_SYSTEM = /["/{}[\]():,]/
 const parse = (a: string, proxyForFunctions?: TypeParseProxyForFunctions): any => {
-  const cache = new Map(DEFS_FOR_PARSE), id: [number] = [17]
+  // const cache = new Map(DEFS_FOR_PARSE)
+  const id: [number] = [17]
+  const cache: { [key: string]: any } = {}
+  for (let i = id[0]; i-- > 0;) cache[DEFS_FOR_STRINGIFY[i][1]] = DEFS_FOR_STRINGIFY[i][0]
 
   const res: any[] = []
   // eslint-disable-next-line prefer-const
@@ -224,7 +225,7 @@ const parse = (a: string, proxyForFunctions?: TypeParseProxyForFunctions): any =
         continue
       default: {
         for (;i++ < l && !REG_SYSTEM.test(a[i]) ? s += a[i] : (i--, false););
-        v = REG_LETTER.test(s[0]) ? (needCache = false, cache.get(s)) : +s
+        v = REG_LETTER.test(s[0]) ? (needCache = false, cache[s]) : +s
       }
     }
     
@@ -234,11 +235,11 @@ const parse = (a: string, proxyForFunctions?: TypeParseProxyForFunctions): any =
       for (;IKS.length;) {
         caches.push(v = iksf(IKS.pop(), v, proxyForFunctions))
       }
-      for (;caches.length;) cache.set(setId(id), caches.pop())
+      for (;caches.length;) cache[setId(id)] = caches.pop()
 
-      if (needCache) cache.set(setId(id), c), needCache = false
+      if (needCache) cache[setId(id)] = c, needCache = false
     }
-    if (needCache) cache.set(setId(id), v)
+    if (needCache) cache[setId(id)] = v
 
     if (cur.t === '[') {
       if (k === res) cur.v[cur.i] = v

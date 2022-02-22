@@ -12,8 +12,8 @@ var e = String, r = Object.prototype, a = r => {
     t = (t - a) / 26 | 0;
     return s;
 }, t = /^0\d|\D/, s = e => '"' + e + '"', n = (e, c, i, u) => {
-    var l = c.get(e);
-    if (l) return l;
+    var o = c.get(e);
+    if (o) return o;
     switch (c.set(e, a(i)), r.toString.call(e).slice(8, -1)) {
       case "Boolean":
         return "B" + +e;
@@ -40,19 +40,19 @@ var e = String, r = Object.prototype, a = r => {
         return "E" + n("" + (u && u(e) || e.name), c, i, u);
 
       case "Array":
-        var o, f = "", p = 0;
-        for (var h in e) {
-            if (t.test(h)) f += n(h, c, i, u) + ":"; else if ((o = +h) > p++) for (;p <= o; p++) f += ",";
-            f += n(e[h], c, i, u) + ",";
+        var l, f = "", h = 0;
+        for (var v in e) {
+            if (t.test(v)) f += n(v, c, i, u) + ":"; else if ((l = +v) > h++) for (;h <= l; h++) f += ",";
+            f += n(e[v], c, i, u) + ",";
         }
-        if ((o = e.length) > p) for (;p <= o; p++) f += ",";
+        if ((l = e.length) > h) for (;h <= l; h++) f += ",";
         return "[" + f.slice(0, -1) + "]";
 
       case "Set":
-        var v = [ "", c, i, u ];
+        var p = [ "", c, i, u ];
         return e.forEach((function(e) {
             this[0] += n(e, this[1], this[2], this[3]) + ",";
-        }), v), "T(" + v[0].slice(0, -1) + ")";
+        }), p), "T(" + p[0].slice(0, -1) + ")";
 
       case "Map":
         var A = [ "", c, i, u ];
@@ -101,68 +101,69 @@ var e = String, r = Object.prototype, a = r => {
       default:
         return console.warn(e), "a";
     }
-}, c = [ 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, null, void 0, NaN, !0, !1, 1 / 0, -1 / 0 ].map(((e, r) => [ e, a([ r ]) ])), i = c.map((e => [ e[1], e[0] ])), u = (e, r) => n(e, new Map(c), [ 17 ], r), l = /[a-z]/, o = /["/{}[\]():,]/, f = (e, r) => {
-    for (var t, s, n, c, u = new Map(i), f = [ 17 ], h = [], v = {
-        v: h,
+}, c = [ 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, null, void 0, NaN, !0, !1, 1 / 0, -1 / 0 ].map(((e, r) => [ e, a([ r ]) ])), i = (e, r) => n(e, new Map(c), [ 17 ], r), u = /[a-z]/, o = /["/{}[\]():,]/, l = (e, r) => {
+    for (var t = [ 17 ], s = {}, n = t[0]; n-- > 0; ) s[c[n][1]] = c[n][0];
+    for (var i, l, h, v, p = [], A = {
+        v: p,
         t: "[",
         i: 0
-    }, A = [ v ], b = h, y = [], w = e.length - 1, g = -1; g++ < w; ) {
-        switch (n = !0, c = e[g]) {
+    }, b = [ A ], y = p, w = [], d = e.length - 1, g = -1; g++ < d; ) {
+        switch (h = !0, v = e[g]) {
           case "B":
-            s = new Boolean(+e[++g]);
+            l = new Boolean(+e[++g]);
             break;
 
           case "I":
           case "U":
           case "F":
-            var d = void 0;
-            switch (c += e[++g] + e[++g]) {
+            var U = void 0;
+            switch (v += e[++g] + e[++g]) {
               case "I8A":
-                d = Int8Array;
+                U = Int8Array;
                 break;
 
               case "U8A":
-                d = Uint8Array;
+                U = Uint8Array;
                 break;
 
               case "U8C":
-                d = Uint8ClampedArray;
+                U = Uint8ClampedArray;
                 break;
 
               case "I16":
-                d = Int16Array;
+                U = Int16Array;
                 break;
 
               case "U16":
-                d = Uint16Array;
+                U = Uint16Array;
                 break;
 
               case "I32":
-                d = Int32Array;
+                U = Int32Array;
                 break;
 
               case "U32":
-                d = Uint32Array;
+                U = Uint32Array;
                 break;
 
               case "F32":
-                d = Float32Array;
+                U = Float32Array;
                 break;
 
               case "F64":
-                d = Float64Array;
+                U = Float64Array;
                 break;
 
               default:
-                throw c;
+                throw v;
             }
-            s = new d(e.slice(g += 2, g = e.indexOf('"', ++g)).split(","));
+            l = new U(e.slice(g += 2, g = e.indexOf('"', ++g)).split(","));
             break;
 
           case "A":
-            var U = "B" !== e[++g];
-            s = new Uint8Array(e.slice(g += 2, g = e.indexOf('"', ++g)).split(",")).buffer, 
-            U && (s = new DataView(s));
+            var k = "B" !== e[++g];
+            l = new Uint8Array(e.slice(g += 2, g = e.indexOf('"', ++g)).split(",")).buffer, 
+            k && (l = new DataView(l));
             break;
 
           case "L":
@@ -174,71 +175,71 @@ var e = String, r = Object.prototype, a = r => {
           case "S":
           case "R":
           case "E":
-            y.push(c);
+            w.push(v);
             continue;
 
           case '"':
-            for (var k = !1; g++ < w && (c += e[g], k || '"' !== e[g]); k = !k && "\\" === e[g]) ;
-            s = JSON.parse(c);
+            for (var I = !1; g++ < d && (v += e[g], I || '"' !== e[g]); I = !I && "\\" === e[g]) ;
+            l = JSON.parse(v);
             break;
 
           case "{":
-            t = {
-                v: s = {},
-                t: c
+            i = {
+                v: l = {},
+                t: v
             };
             break;
 
           case "[":
-            t = {
-                v: s = [],
-                t: c,
+            i = {
+                v: l = [],
+                t: v,
                 i: 0
             };
             break;
 
           case "T":
-            t = {
-                v: s = new Set,
-                t: c
+            i = {
+                v: l = new Set,
+                t: v
             }, g++;
             break;
 
           case "M":
-            t = {
-                v: s = new Map,
-                t: c
+            i = {
+                v: l = new Map,
+                t: v
             }, g++;
             break;
 
           case "]":
           case "}":
           case ")":
-            A.pop(), s = v.v, v = A[A.length - 1];
+            b.pop(), l = A.v, A = b[b.length - 1];
             continue;
 
           case ",":
-            b = h, "[" === v.t && (v.v.length = ++v.i);
+            y = p, "[" === A.t && (A.v.length = ++A.i);
             continue;
 
           case ":":
-            b = s, "[" === v.t && (v.v.length = v.i--);
+            y = l, "[" === A.t && (A.v.length = A.i--);
             continue;
 
           default:
-            for (;g++ < w && !o.test(e[g]) ? c += e[g] : (g--, 0); ) ;
-            s = l.test(c[0]) ? (n = !1, u.get(c)) : +c;
+            for (;g++ < d && !o.test(e[g]) ? v += e[g] : (g--, 0); ) ;
+            l = u.test(v[0]) ? (h = !1, s[v]) : +v;
         }
-        if (y.length) {
-            for (var I = s, S = []; y.length; ) S.push(s = p(y.pop(), s, r));
-            for (;S.length; ) u.set(a(f), S.pop());
-            n && (u.set(a(f), I), n = !1);
+        if (w.length) {
+            for (var S = l, m = []; w.length; ) m.push(l = f(w.pop(), l, r));
+            for (;m.length; ) s[a(t)] = m.pop();
+            h && (s[a(t)] = S, h = !1);
         }
-        n && u.set(a(f), s), "[" === v.t ? b === h ? v.v[v.i] = s : (v.v[b] = s, b = h) : "T" === v.t ? v.v.add(s) : b !== h && ("{" === v.t ? v.v[b] = s : v.v.set(b, s), 
-        b = h), t && (A.push(v = t), t = null);
+        h && (s[a(t)] = l), "[" === A.t ? y === p ? A.v[A.i] = l : (A.v[y] = l, y = p) : "T" === A.t ? A.v.add(l) : y !== p && ("{" === A.t ? A.v[y] = l : A.v.set(y, l), 
+        y = p), i && (b.push(A = i), i = null);
     }
-    return h[0];
-}, p = (r, a, t) => {
+    return p[0];
+}, f = (r, a, t) => {
     switch (r) {
       case "-":
         return - +a;
@@ -268,8 +269,8 @@ var e = String, r = Object.prototype, a = r => {
         return t && t(a) || "%" + a + "%";
     }
 }, h = {
-    build: u,
-    parse: f
+    build: i,
+    parse: l
 };
 
-exports.build = u, exports.default = h, exports.parse = f;
+exports.build = i, exports.default = h, exports.parse = l;

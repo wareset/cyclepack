@@ -4,10 +4,10 @@ dester builds:
 index.ts
 */
 var e = String, r = Object.prototype, a = r => {
-    for (var a, t = ++r[0], s = ""; t > 0; ) a = (t - 1) % 26, s = e.fromCharCode(97 + a) + s, 
+    for (var a, t = ++r[0], n = ""; t > 0; ) a = (t - 1) % 26, n = e.fromCharCode(97 + a) + n, 
     t = (t - a) / 26 | 0;
-    return s;
-}, t = /^0\d|\D/, s = e => '"' + e + '"', n = (e, c, i, u) => {
+    return n;
+}, t = /^0\d|\D/, n = e => '"' + e + '"', s = (e, c, i, u) => {
     var l = c.get(e);
     if (l) return l;
     switch (c.set(e, a(i)), r.toString.call(e).slice(8, -1)) {
@@ -15,150 +15,151 @@ var e = String, r = Object.prototype, a = r => {
         return "B" + +e;
 
       case "Number":
-        return e === +e ? e < 0 ? "-" + n(-e, c, i, u) : "" + e : "N" + n(+e, c, i, u);
+        return e === +e ? e < 0 ? "-" + s(-e, c, i, u) : "" + e : "N" + s(+e, c, i, u);
 
       case "String":
-        return e === "" + e ? e !== "" + +e ? JSON.stringify(e) : "Q" + n(+e, c, i, u) : "S" + n("" + e, c, i, u);
+        return e === "" + e ? e !== "" + +e ? JSON.stringify(e) : "Q" + s(+e, c, i, u) : "S" + s("" + e, c, i, u);
 
       case "Symbol":
-        return "H" + n(e.toString().slice(7, -1), c, i, u);
+        return "H" + s(e.toString().slice(7, -1), c, i, u);
 
       case "BigInt":
-        return "L" + n("" + e, c, i, u);
+        return "L" + s("" + e, c, i, u);
 
       case "Date":
-        return "D" + n(e.getTime(), c, i, u);
+        return "D" + s(e.getTime(), c, i, u);
 
       case "RegExp":
-        return "R" + n(e.source + "," + e.flags, c, i, u);
+        return "R" + s(e.source + "," + e.flags, c, i, u);
 
       case "Function":
-        return "E" + n("" + (u && u(e) || e.name), c, i, u);
+        return "E" + s("" + (u && u(e) || e.name), c, i, u);
 
       case "Array":
         var o, f = "", h = 0;
-        for (var A in e) {
-            if (t.test(A)) f += n(A, c, i, u) + ":"; else if ((o = +A) > h++) for (;h <= o; h++) f += ",";
-            f += n(e[A], c, i, u) + ",";
+        for (var v in e) {
+            if (t.test(v)) f += s(v, c, i, u) + ":"; else if ((o = +v) > h++) for (;h <= o; h++) f += ",";
+            f += s(e[v], c, i, u) + ",";
         }
         if ((o = e.length) > h) for (;h <= o; h++) f += ",";
         return "[" + f.slice(0, -1) + "]";
 
       case "Set":
-        var v = [ "", c, i, u ];
+        var A = [ "", c, i, u ];
         return e.forEach((function(e) {
-            this[0] += n(e, this[1], this[2], this[3]) + ",";
-        }), v), "T(" + v[0].slice(0, -1) + ")";
+            this[0] += s(e, this[1], this[2], this[3]) + ",";
+        }), A), "T(" + A[0].slice(0, -1) + ")";
 
       case "Map":
         var y = [ "", c, i, u ];
         return e.forEach((function(e, r) {
-            this[0] += n(r, this[1], this[2], this[3]) + ":" + n(e, this[1], this[2], this[3]) + ",";
+            this[0] += s(r, this[1], this[2], this[3]) + ":" + s(e, this[1], this[2], this[3]) + ",";
         }), y), "M(" + y[0].slice(0, -1) + ")";
 
       case "Object":
         var b = "";
-        for (var p in e) r.hasOwnProperty.call(e, p) && (b += n(p, c, i, u) + ":" + n(e[p], c, i, u) + ",");
+        for (var p in e) r.hasOwnProperty.call(e, p) && (b += s(p, c, i, u) + ":" + s(e[p], c, i, u) + ",");
         return "{" + b.slice(0, -1) + "}";
 
       case "Int8Array":
-        return "I8A" + s(e);
+        return "I8A" + n(e);
 
       case "Uint8Array":
-        return "U8A" + s(e);
+        return "U8A" + n(e);
 
       case "Uint8ClampedArray":
-        return "U8C" + s(e);
+        return "U8C" + n(e);
 
       case "Int16Array":
-        return "I16" + s(e);
+        return "I16" + n(e);
 
       case "Uint16Array":
-        return "U16" + s(e);
+        return "U16" + n(e);
 
       case "Int32Array":
-        return "I32" + s(e);
+        return "I32" + n(e);
 
       case "Uint32Array":
-        return "U32" + s(e);
+        return "U32" + n(e);
 
       case "Float32Array":
-        return "F32" + s(e);
+        return "F32" + n(e);
 
       case "Float64Array":
-        return "F64" + s(e);
+        return "F64" + n(e);
 
       case "ArrayBuffer":
-        return "AB" + s(new Uint8Array(new DataView(e).buffer));
+        return "AB" + n(new Uint8Array(new DataView(e).buffer));
 
       case "DataView":
-        return "AV" + s(new Uint8Array(e.buffer));
+        return "AV" + n(new Uint8Array(e.buffer));
 
       default:
         return console.warn(e), "a";
     }
-}, c = [ 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, null, void 0, NaN, !0, !1, 1 / 0, -1 / 0 ].map(((e, r) => [ e, a([ r ]) ])), i = c.map((e => [ e[1], e[0] ])), u = (e, r) => n(e, new Map(c), [ 17 ], r), l = /[a-z]/, o = /["/{}[\]():,]/, f = (e, r) => {
-    for (var t, s, n, c, u = new Map(i), f = [ 17 ], A = [], v = {
+}, c = [ 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, null, void 0, NaN, !0, !1, 1 / 0, -1 / 0 ].map(((e, r) => [ e, a([ r ]) ])), i = (e, r) => s(e, new Map(c), [ 17 ], r), u = /[a-z]/, l = /["/{}[\]():,]/, o = (e, r) => {
+    for (var t = [ 17 ], n = {}, s = t[0]; s-- > 0; ) n[c[s][1]] = c[s][0];
+    for (var i, o, h, v, A = [], y = {
         v: A,
         t: "[",
         i: 0
-    }, y = [ v ], b = A, p = [], w = e.length - 1, g = -1; g++ < w; ) {
-        switch (n = !0, c = e[g]) {
+    }, b = [ y ], p = A, w = [], g = e.length - 1, U = -1; U++ < g; ) {
+        switch (h = !0, v = e[U]) {
           case "B":
-            s = new Boolean(+e[++g]);
+            o = new Boolean(+e[++U]);
             break;
 
           case "I":
           case "U":
           case "F":
-            var U = void 0;
-            switch (c += e[++g] + e[++g]) {
+            var d = void 0;
+            switch (v += e[++U] + e[++U]) {
               case "I8A":
-                U = Int8Array;
+                d = Int8Array;
                 break;
 
               case "U8A":
-                U = Uint8Array;
+                d = Uint8Array;
                 break;
 
               case "U8C":
-                U = Uint8ClampedArray;
+                d = Uint8ClampedArray;
                 break;
 
               case "I16":
-                U = Int16Array;
+                d = Int16Array;
                 break;
 
               case "U16":
-                U = Uint16Array;
+                d = Uint16Array;
                 break;
 
               case "I32":
-                U = Int32Array;
+                d = Int32Array;
                 break;
 
               case "U32":
-                U = Uint32Array;
+                d = Uint32Array;
                 break;
 
               case "F32":
-                U = Float32Array;
+                d = Float32Array;
                 break;
 
               case "F64":
-                U = Float64Array;
+                d = Float64Array;
                 break;
 
               default:
-                throw c;
+                throw v;
             }
-            s = new U(e.slice(g += 2, g = e.indexOf('"', ++g)).split(","));
+            o = new d(e.slice(U += 2, U = e.indexOf('"', ++U)).split(","));
             break;
 
           case "A":
-            var d = "B" !== e[++g];
-            s = new Uint8Array(e.slice(g += 2, g = e.indexOf('"', ++g)).split(",")).buffer, 
-            d && (s = new DataView(s));
+            var k = "B" !== e[++U];
+            o = new Uint8Array(e.slice(U += 2, U = e.indexOf('"', ++U)).split(",")).buffer, 
+            k && (o = new DataView(o));
             break;
 
           case "L":
@@ -170,71 +171,71 @@ var e = String, r = Object.prototype, a = r => {
           case "S":
           case "R":
           case "E":
-            p.push(c);
+            w.push(v);
             continue;
 
           case '"':
-            for (var k = !1; g++ < w && (c += e[g], k || '"' !== e[g]); k = !k && "\\" === e[g]) ;
-            s = JSON.parse(c);
+            for (var I = !1; U++ < g && (v += e[U], I || '"' !== e[U]); I = !I && "\\" === e[U]) ;
+            o = JSON.parse(v);
             break;
 
           case "{":
-            t = {
-                v: s = {},
-                t: c
+            i = {
+                v: o = {},
+                t: v
             };
             break;
 
           case "[":
-            t = {
-                v: s = [],
-                t: c,
+            i = {
+                v: o = [],
+                t: v,
                 i: 0
             };
             break;
 
           case "T":
-            t = {
-                v: s = new Set,
-                t: c
-            }, g++;
+            i = {
+                v: o = new Set,
+                t: v
+            }, U++;
             break;
 
           case "M":
-            t = {
-                v: s = new Map,
-                t: c
-            }, g++;
+            i = {
+                v: o = new Map,
+                t: v
+            }, U++;
             break;
 
           case "]":
           case "}":
           case ")":
-            y.pop(), s = v.v, v = y[y.length - 1];
+            b.pop(), o = y.v, y = b[b.length - 1];
             continue;
 
           case ",":
-            b = A, "[" === v.t && (v.v.length = ++v.i);
+            p = A, "[" === y.t && (y.v.length = ++y.i);
             continue;
 
           case ":":
-            b = s, "[" === v.t && (v.v.length = v.i--);
+            p = o, "[" === y.t && (y.v.length = y.i--);
             continue;
 
           default:
-            for (;g++ < w && !o.test(e[g]) ? c += e[g] : (g--, 0); ) ;
-            s = l.test(c[0]) ? (n = !1, u.get(c)) : +c;
+            for (;U++ < g && !l.test(e[U]) ? v += e[U] : (U--, 0); ) ;
+            o = u.test(v[0]) ? (h = !1, n[v]) : +v;
         }
-        if (p.length) {
-            for (var I = s, S = []; p.length; ) S.push(s = h(p.pop(), s, r));
-            for (;S.length; ) u.set(a(f), S.pop());
-            n && (u.set(a(f), I), n = !1);
+        if (w.length) {
+            for (var S = o, m = []; w.length; ) m.push(o = f(w.pop(), o, r));
+            for (;m.length; ) n[a(t)] = m.pop();
+            h && (n[a(t)] = S, h = !1);
         }
-        n && u.set(a(f), s), "[" === v.t ? b === A ? v.v[v.i] = s : (v.v[b] = s, b = A) : "T" === v.t ? v.v.add(s) : b !== A && ("{" === v.t ? v.v[b] = s : v.v.set(b, s), 
-        b = A), t && (y.push(v = t), t = null);
+        h && (n[a(t)] = o), "[" === y.t ? p === A ? y.v[y.i] = o : (y.v[p] = o, p = A) : "T" === y.t ? y.v.add(o) : p !== A && ("{" === y.t ? y.v[p] = o : y.v.set(p, o), 
+        p = A), i && (b.push(y = i), i = null);
     }
     return A[0];
-}, h = (r, a, t) => {
+}, f = (r, a, t) => {
     switch (r) {
       case "-":
         return - +a;
@@ -263,9 +264,9 @@ var e = String, r = Object.prototype, a = r => {
       default:
         return t && t(a) || "%" + a + "%";
     }
-}, A = {
-    build: u,
-    parse: f
+}, h = {
+    build: i,
+    parse: o
 };
 
-export { u as build, A as default, f as parse };
+export { i as build, h as default, o as parse };
