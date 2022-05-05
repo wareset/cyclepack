@@ -10,7 +10,10 @@ test('Base:', () => {
   const symbol = Symbol(42)
   expect(thereandback(symbol).toString()).toEqual(symbol.toString())
 
-  expect(thereandback('')).toEqual('')
+  expect(thereandback('\n\n\\\\\\\n\r\n\\\\n\nnn\\\nn\n\n\nn\t'))
+    .toEqual('\n\n\\\\\\\n\r\n\\\\n\nnn\\\nn\n\n\nn\t')
+  expect(thereandback('\'\\$\'`\\`""``\\`\\`\\`"`\'\\"`\n`"\\n\'`\n\\n'))
+    .toEqual('\'\\$\'`\\`""``\\`\\`\\`"`\'\\"`\n`"\\n\'`\n\\n')
   expect(thereandback('42')).toEqual('42')
   const texts = ['some', '\0`\ntext\t"\t', '']
   expect(thereandback(texts)).toEqual(texts)
