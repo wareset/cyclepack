@@ -31,7 +31,6 @@ const _run_ = (
   if (key) return key!
   cache.set(v, setId(id))
   switch (__OPROTO__.toString.call(v).slice(8, -1)) {
-
     case 'BigInt':
       return 'L' + _run_('' + v, cache, id, cb)
 
@@ -126,8 +125,9 @@ const _run_ = (
     case 'DataView':
       return `AV${stringifyFast(new Uint8Array(v.buffer))}`
     default:
-      console.warn(v)
-      return 'l'
+      console.warn('cyclepack:', v)
+      return '{' + createObject(v, cache, id, cb).slice(0, -1) + '}'
+      // return 'l'
   }
 }
 
