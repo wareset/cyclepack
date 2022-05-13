@@ -11,55 +11,43 @@ var e = String, r = Object.prototype, a = r => {
     var l = c.get(e);
     if (l) return l;
     switch (c.set(e, a(i)), r.toString.call(e).slice(8, -1)) {
-      case "Boolean":
-        return "B" + +e;
-
-      case "Number":
-        return e === +e ? e < 0 ? "-" + s(-e, c, i, u) : "" + e : "N" + s(+e, c, i, u);
-
-      case "String":
-        return e === "" + e ? e !== "" + +e ? JSON.stringify(e) : "Q" + s(+e, c, i, u) : "S" + s("" + e, c, i, u);
-
-      case "Symbol":
-        return "H" + s(e.toString().slice(7, -1), c, i, u);
-
       case "BigInt":
         return "L" + s("" + e, c, i, u);
 
-      case "Date":
-        return "D" + s(e.getTime(), c, i, u);
-
-      case "RegExp":
-        return "R" + s(e.source + "," + e.flags, c, i, u);
+      case "Object":
+        var o = "";
+        for (var f in e) r.hasOwnProperty.call(e, f) && (o += s(f, c, i, u) + ":" + s(e[f], c, i, u) + ",");
+        return "{" + o.slice(0, -1) + "}";
 
       case "Function":
         return "E" + s("" + (u && u(e) || e.name), c, i, u);
 
+      case "Boolean":
+        return "B" + +e;
+
+      case "Symbol":
+        return "H" + s(e.toString().slice(7, -1), c, i, u);
+
+      case "Number":
+        return e === +e ? e < 0 ? "-" + s(-e, c, i, u) : "" + e : "N" + s(+e, c, i, u);
+
+      case "Date":
+        return "D" + s(e.getTime(), c, i, u);
+
+      case "String":
+        return e === "" + e ? e !== "" + +e ? JSON.stringify(e) : "Q" + s(+e, c, i, u) : "S" + s("" + e, c, i, u);
+
+      case "RegExp":
+        return "R" + s(e.source + "," + e.flags, c, i, u);
+
       case "Array":
-        var o, f = "", h = 0;
-        for (var v in e) {
-            if (t.test(v)) f += s(v, c, i, u) + ":"; else if ((o = +v) > h++) for (;h <= o; h++) f += ",";
-            f += s(e[v], c, i, u) + ",";
+        var h, v = "", A = 0;
+        for (var y in e) {
+            if (t.test(y)) v += s(y, c, i, u) + ":"; else if ((h = +y) > A++) for (;A <= h; A++) v += ",";
+            v += s(e[y], c, i, u) + ",";
         }
-        if ((o = e.length) > h) for (;h <= o; h++) f += ",";
-        return "[" + f.slice(0, -1) + "]";
-
-      case "Set":
-        var A = [ "", c, i, u ];
-        return e.forEach((function(e) {
-            this[0] += s(e, this[1], this[2], this[3]) + ",";
-        }), A), "T(" + A[0].slice(0, -1) + ")";
-
-      case "Map":
-        var y = [ "", c, i, u ];
-        return e.forEach((function(e, r) {
-            this[0] += s(r, this[1], this[2], this[3]) + ":" + s(e, this[1], this[2], this[3]) + ",";
-        }), y), "M(" + y[0].slice(0, -1) + ")";
-
-      case "Object":
-        var b = "";
-        for (var p in e) r.hasOwnProperty.call(e, p) && (b += s(p, c, i, u) + ":" + s(e[p], c, i, u) + ",");
-        return "{" + b.slice(0, -1) + "}";
+        if ((h = e.length) > A) for (;A <= h; A++) v += ",";
+        return "[" + v.slice(0, -1) + "]";
 
       case "Int8Array":
         return "I8A" + n(e);
@@ -87,6 +75,18 @@ var e = String, r = Object.prototype, a = r => {
 
       case "Float64Array":
         return "F64" + n(e);
+
+      case "Map":
+        var b = [ "", c, i, u ];
+        return e.forEach((function(e, r) {
+            this[0] += s(r, this[1], this[2], this[3]) + ":" + s(e, this[1], this[2], this[3]) + ",";
+        }), b), "M(" + b[0].slice(0, -1) + ")";
+
+      case "Set":
+        var p = [ "", c, i, u ];
+        return e.forEach((function(e) {
+            this[0] += s(e, this[1], this[2], this[3]) + ",";
+        }), p), "T(" + p[0].slice(0, -1) + ")";
 
       case "ArrayBuffer":
         return "AB" + n(new Uint8Array(new DataView(e).buffer));

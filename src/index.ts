@@ -21,27 +21,40 @@ const _run_ = (
   if (key) return key!
   cache.set(v, setId(id))
   switch (__OPROTO__.toString.call(v).slice(8, -1)) {
+
+    case 'BigInt':
+      return 'L' + _run_('' + v, cache, id, cb)
+
+    case 'Object': {
+      let res = ''
+      for (const k in v) {
+        if (__OPROTO__.hasOwnProperty.call(v, k)) {
+          res += _run_(k, cache, id, cb) + ':' + _run_(v[k], cache, id, cb) + ','
+        }
+      }
+      return '{' + res.slice(0, -1) + '}'
+    }
+    case 'Function':
+      return 'E' + _run_('' + (cb && cb(v) || v.name), cache, id, cb)
     case 'Boolean':
       return 'B' + +v
+    case 'Symbol':
+      return 'H' + _run_(v.toString().slice(7, -1), cache, id, cb)
+
     case 'Number':
       return v === +v
         ? v < 0 ? '-' + _run_(-v, cache, id, cb) : '' + v
         : 'N' + _run_(+v, cache, id, cb)
-      // return v === +v ? '' + v : 'N' + _run_(+v, cache, id, cb)
+    case 'Date':
+      return 'D' + _run_(v.getTime(), cache, id, cb)
+
     case 'String':
       return v === '' + v
         ? v !== '' + +v ? JSON.stringify(v) : 'Q' + _run_(+v, cache, id, cb)
         : 'S' + _run_('' + v, cache, id, cb)
-    case 'Symbol':
-      return 'H' + _run_(v.toString().slice(7, -1), cache, id, cb)
-    case 'BigInt':
-      return 'L' + _run_('' + v, cache, id, cb)
-    case 'Date':
-      return 'D' + _run_(v.getTime(), cache, id, cb)
     case 'RegExp':
       return 'R' + _run_(v.source + ',' + v.flags, cache, id, cb)
-    case 'Function':
-      return 'E' + _run_('' + (cb && cb(v) || v.name), cache, id, cb)
+
     case 'Array': {
       let res = ''
       let i = 0, j: number
@@ -52,33 +65,6 @@ const _run_ = (
       }
       if ((j = v.length) > i) for (;i <= j; i++) res += ','
       return '[' + res.slice(0, -1) + ']'
-    }
-    case 'Set': {
-      const data: [string, any, [number], any] = ['', cache, id, cb]
-      // eslint-disable-next-line func-names
-      v.forEach(function (v: any) {
-        // @ts-ignore
-        this[0] += _run_(v, this[1], this[2], this[3]) + ','
-      }, data)
-      return `T(${data[0].slice(0, -1)})`
-    }
-    case 'Map': {
-      const data: [string, any, [number], any] = ['', cache, id, cb]
-      // eslint-disable-next-line func-names
-      v.forEach(function (v: any, k: any) {
-        // @ts-ignore
-        this[0] += _run_(k, this[1], this[2], this[3]) + ':' + _run_(v, this[1], this[2], this[3]) + ','
-      }, data)
-      return `M(${data[0].slice(0, -1)})`
-    }
-    case 'Object': {
-      let res = ''
-      for (const k in v) {
-        if (__OPROTO__.hasOwnProperty.call(v, k)) {
-          res += _run_(k, cache, id, cb) + ':' + _run_(v[k], cache, id, cb) + ','
-        }
-      }
-      return '{' + res.slice(0, -1) + '}'
     }
     case 'Int8Array':
       return `I8A${stringifyFast(v)}`
@@ -98,6 +84,26 @@ const _run_ = (
       return `F32${stringifyFast(v)}`
     case 'Float64Array':
       return `F64${stringifyFast(v)}`
+
+    case 'Map': {
+      const data: [string, any, [number], any] = ['', cache, id, cb]
+      // eslint-disable-next-line func-names
+      v.forEach(function (v: any, k: any) {
+        // @ts-ignore
+        this[0] += _run_(k, this[1], this[2], this[3]) + ':' + _run_(v, this[1], this[2], this[3]) + ','
+      }, data)
+      return `M(${data[0].slice(0, -1)})`
+    }
+    case 'Set': {
+      const data: [string, any, [number], any] = ['', cache, id, cb]
+      // eslint-disable-next-line func-names
+      v.forEach(function (v: any) {
+        // @ts-ignore
+        this[0] += _run_(v, this[1], this[2], this[3]) + ','
+      }, data)
+      return `T(${data[0].slice(0, -1)})`
+    }
+      
     case 'ArrayBuffer':
       return `AB${stringifyFast(new Uint8Array(new DataView(v).buffer))}`
     case 'DataView':
