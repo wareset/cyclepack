@@ -51,7 +51,7 @@ import cyclepack from 'cyclepack';
 const someFunc = () => {}
 
 const packed = cyclepack.build(someFunc)
-console.log(packed) // E"someFunc"
+console.log(packed) // F"someFunc"
 
 const unpacked = cyclepack.parse(packed)
 console.log(unpacked) // %someFunc%
@@ -68,7 +68,7 @@ const packed = cyclepack.build([someFunc, someFunc2], (func) => {
   if (func === someFunc) return 'FN_UNIQUE_ID'
   return null
 })
-console.log(packed) // [E"FN_UNIQUE_ID",E"someFunc2"]
+console.log(packed) // [F"FN_UNIQUE_ID",F"someFunc2"]
 
 const unpacked = cyclepack.parse(packed, (fname) => {
   if (fname === 'FN_UNIQUE_ID') return someFunc

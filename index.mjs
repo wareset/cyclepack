@@ -20,7 +20,7 @@ var e = String, r = Object.prototype, a = r => {
         return "{" + o.slice(0, -1) + "}";
 
       case "Function":
-        return "E" + s("" + (u && u(e) || e.name), c, i, u);
+        return "F" + s("" + (u && u(e) || e.name), c, i, u);
 
       case "Boolean":
         return "B" + +e;
@@ -71,10 +71,10 @@ var e = String, r = Object.prototype, a = r => {
         return "U32" + n(e);
 
       case "Float32Array":
-        return "F32" + n(e);
+        return "Y32" + n(e);
 
       case "Float64Array":
-        return "F64" + n(e);
+        return "Y64" + n(e);
 
       case "Map":
         var b = [ "", c, i, u ];
@@ -111,7 +111,7 @@ var e = String, r = Object.prototype, a = r => {
 
           case "I":
           case "U":
-          case "F":
+          case "Y":
             var d = void 0;
             switch (v += e[++U] + e[++U]) {
               case "I8A":
@@ -142,11 +142,11 @@ var e = String, r = Object.prototype, a = r => {
                 d = Uint32Array;
                 break;
 
-              case "F32":
+              case "Y32":
                 d = Float32Array;
                 break;
 
-              case "F64":
+              case "Y64":
                 d = Float64Array;
                 break;
 
@@ -170,7 +170,7 @@ var e = String, r = Object.prototype, a = r => {
           case "H":
           case "S":
           case "R":
-          case "E":
+          case "F":
             w.push(v);
             continue;
 

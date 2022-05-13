@@ -35,7 +35,7 @@ const _run_ = (
       return '{' + res.slice(0, -1) + '}'
     }
     case 'Function':
-      return 'E' + _run_('' + (cb && cb(v) || v.name), cache, id, cb)
+      return 'F' + _run_('' + (cb && cb(v) || v.name), cache, id, cb)
     case 'Boolean':
       return 'B' + +v
     case 'Symbol':
@@ -81,9 +81,9 @@ const _run_ = (
     case 'Uint32Array':
       return `U32${stringifyFast(v)}`
     case 'Float32Array':
-      return `F32${stringifyFast(v)}`
+      return `Y32${stringifyFast(v)}`
     case 'Float64Array':
-      return `F64${stringifyFast(v)}`
+      return `Y64${stringifyFast(v)}`
 
     case 'Map': {
       const data: [string, any, [number], any] = ['', cache, id, cb]
@@ -143,7 +143,7 @@ const parse = (a: string, proxyForFunctions?: TypeParseProxyForFunctions): any =
         break
       case 'I':
       case 'U':
-      case 'F': {
+      case 'Y': {
         let Ctor: any
         switch (s += a[++i] + a[++i]) {
           case 'I8A':
@@ -167,10 +167,10 @@ const parse = (a: string, proxyForFunctions?: TypeParseProxyForFunctions): any =
           case 'U32':
             Ctor = Uint32Array
             break
-          case 'F32':
+          case 'Y32':
             Ctor = Float32Array
             break
-          case 'F64':
+          case 'Y64':
             Ctor = Float64Array
             break
           default:
@@ -194,7 +194,7 @@ const parse = (a: string, proxyForFunctions?: TypeParseProxyForFunctions): any =
       case 'H'/* Symbol */:
       case 'S'/* new String */:
       case 'R'/* RegExp */:
-      case 'E'/* Function */:
+      case 'F'/* Function */:
         IKS.push(s)
         continue
       case '"': {
