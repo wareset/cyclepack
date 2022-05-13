@@ -14,6 +14,16 @@ const setId = (arr: [number]): string => {
 const REG_NOT_INT = /^0\d|\D/
 const stringifyFast = (s: any): string => '"' + s + '"'
 
+const createObject: typeof _run_ = (v, cache, id, cb): string => {
+  let res = ''
+  for (const k in v) {
+    if (__OPROTO__.hasOwnProperty.call(v, k)) {
+      res += _run_(k, cache, id, cb) + ':' + _run_(v[k], cache, id, cb) + ','
+    }
+  }
+  return res
+}
+
 const _run_ = (
   v: any, cache: Map<any, string>, id: [number], cb: Function | null
 ): string => {
@@ -26,13 +36,7 @@ const _run_ = (
       return 'L' + _run_('' + v, cache, id, cb)
 
     case 'Object': {
-      let res = ''
-      for (const k in v) {
-        if (__OPROTO__.hasOwnProperty.call(v, k)) {
-          res += _run_(k, cache, id, cb) + ':' + _run_(v[k], cache, id, cb) + ','
-        }
-      }
-      return '{' + res.slice(0, -1) + '}'
+      return '{' + createObject(v, cache, id, cb).slice(0, -1) + '}'
     }
     case 'Function':
       return 'F' + _run_('' + (cb && cb(v) || v.name), cache, id, cb)
@@ -40,6 +44,19 @@ const _run_ = (
       return 'B' + +v
     case 'Symbol':
       return 'H' + _run_(v.toString().slice(7, -1), cache, id, cb)
+
+    case 'Error':
+    case 'EvalError':
+    case 'RangeError':
+    case 'ReferenceError':
+    case 'SyntaxError':
+    case 'TypeError':
+    case 'URIError': {
+      return 'E' + v.name.slice(0, 2) +
+      '{' + createObject(v, cache, id, cb) +
+      _run_('message', cache, id, cb) + ':' + _run_(v.message, cache, id, cb) +
+      '}'
+    }
 
     case 'Number':
       return v === +v
@@ -110,7 +127,7 @@ const _run_ = (
       return `AV${stringifyFast(new Uint8Array(v.buffer))}`
     default:
       console.warn(v)
-      return 'a'
+      return 'l'
   }
 }
 
@@ -177,6 +194,34 @@ const parse = (a: string, proxyForFunctions?: TypeParseProxyForFunctions): any =
             throw s
         }
         v = new Ctor(a.slice(i += 2, i = a.indexOf('"', ++i)).split(','))
+        break
+      }
+      case 'E'/* Error */: {
+        let Ctor: any
+        switch (s += a[++i] + a[++i]) {
+          case 'EEv':
+            Ctor = EvalError
+            break
+          case 'ERa':
+            Ctor = RangeError
+            break
+          case 'ERe':
+            Ctor = ReferenceError
+            break
+          case 'ESy':
+            Ctor = SyntaxError
+            break
+          case 'ETy':
+            Ctor = TypeError
+            break
+          case 'EUR':
+            Ctor = URIError
+            break
+          case 'EEr':
+          default:
+            Ctor = Error
+        }
+        newCur = { v: v = new Ctor(''), t: a[++i] }
         break
       }
       case 'A': {
@@ -273,6 +318,7 @@ const iksf = (ik: any, v: any, proxyForFunctions: any): any => {
     case 'H': return Symbol(v)
     case 'S': return new __String__(v)
     case 'R': return new RegExp(v.slice(0, ik = v.lastIndexOf(',')), v.slice(ik + 1))
+    
     default: return proxyForFunctions && proxyForFunctions(v) || `%${v}%`
   }
 }

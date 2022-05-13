@@ -124,3 +124,8 @@ test('Functions:', () => {
   // console.log(unpacked)
   expect(unpacked).toEqual([someFunc, '%someFunc2%'])
 })
+
+// eslint-disable-next-line jest/no-commented-out-tests
+// test('Errors:', () => {
+//   expect([new Error('')]).toEqual(new Error(''))
+// })
