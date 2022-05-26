@@ -17,7 +17,7 @@
     "type": "git",
     "url": "git+https://github.com/wareset/cyclepack.git"
   },
-  "author": "rease <rease@wareset.com>",
+  "author": "rease <cftcview@gmail.com>",
   "main": "index",
   "module": "index.mjs",
   "types": "index.d.ts",

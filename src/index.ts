@@ -15,13 +15,13 @@ const REG_NOT_INT = /^0\d|\D/
 const stringifyFast = (s: any): string => '"' + s + '"'
 
 const createObject: typeof _run_ = (v, cache, id, cb): string => {
-  let res = ''
+  let res = '{', sep = ''
   for (const k in v) {
     if (__OPROTO__.hasOwnProperty.call(v, k)) {
-      res += _run_(k, cache, id, cb) + ':' + _run_(v[k], cache, id, cb) + ','
+      res += sep + _run_(k, cache, id, cb) + ':' + _run_(v[k], cache, id, cb), sep = ','
     }
   }
-  return res
+  return res + '}'
 }
 
 const _run_ = (
@@ -34,9 +34,8 @@ const _run_ = (
     case 'BigInt':
       return 'L' + _run_('' + v, cache, id, cb)
 
-    case 'Object': {
-      return '{' + createObject(v, cache, id, cb).slice(0, -1) + '}'
-    }
+    case 'Object':
+      return createObject(v, cache, id, cb)
     case 'Function':
       return 'F' + _run_('' + (cb && cb(v) || v.name), cache, id, cb)
     case 'Boolean':
@@ -51,8 +50,9 @@ const _run_ = (
     case 'SyntaxError':
     case 'TypeError':
     case 'URIError': {
-      return 'E' + v.name.slice(0, 2) +
-      '{' + createObject(v, cache, id, cb) +
+      let res = createObject(v, cache, id, cb).slice(0, -1)
+      if (res.length > 1) res += ','
+      return 'E' + v.name.slice(0, 2) + res +
       _run_('message', cache, id, cb) + ':' + _run_(v.message, cache, id, cb) +
       '}'
     }
@@ -72,15 +72,15 @@ const _run_ = (
       return 'R' + _run_(v.source + ',' + v.flags, cache, id, cb)
 
     case 'Array': {
-      let res = ''
+      let res = '[', sep = ''
       let i = 0, j: number
       for (const k in v) {
-        if (REG_NOT_INT.test(k)) res += _run_(k, cache, id, cb) + ':'
+        if (REG_NOT_INT.test(k)) res += sep + _run_(k, cache, id, cb) + ':', sep = ''
         else if ((j = +k) > i++) for (;i <= j; i++) res += ','
-        res += _run_(v[k], cache, id, cb) + ','
+        res += sep + _run_(v[k], cache, id, cb), sep = ','
       }
-      if ((j = v.length) > i) for (;i <= j; i++) res += ','
-      return '[' + res.slice(0, -1) + ']'
+      if ((j = v.length) > i) for (;i <= j; i++) res += sep, sep = ','
+      return res + ']'
     }
     case 'Int8Array':
       return `I8A${stringifyFast(v)}`
@@ -102,22 +102,22 @@ const _run_ = (
       return `Y64${stringifyFast(v)}`
 
     case 'Map': {
-      const data: [string, any, [number], any] = ['', cache, id, cb]
+      const data: [string, any, [number], any, string] = ['M(', cache, id, cb, '']
       // eslint-disable-next-line func-names
       v.forEach(function (v: any, k: any) {
         // @ts-ignore
-        this[0] += _run_(k, this[1], this[2], this[3]) + ':' + _run_(v, this[1], this[2], this[3]) + ','
+        this[0] += this[4] + _run_(k, this[1], this[2], this[3]) + ':' + _run_(v, this[1], this[2], this[3]), this[4] = ','
       }, data)
-      return `M(${data[0].slice(0, -1)})`
+      return data[0] + ')'
     }
     case 'Set': {
-      const data: [string, any, [number], any] = ['', cache, id, cb]
+      const data: [string, any, [number], any, string] = ['T(', cache, id, cb, '']
       // eslint-disable-next-line func-names
       v.forEach(function (v: any) {
         // @ts-ignore
-        this[0] += _run_(v, this[1], this[2], this[3]) + ','
+        this[0] += this[4] + _run_(v, this[1], this[2], this[3]), this[4] = ','
       }, data)
-      return `T(${data[0].slice(0, -1)})`
+      return data[0] + ')'
     }
       
     case 'ArrayBuffer':
@@ -126,7 +126,7 @@ const _run_ = (
       return `AV${stringifyFast(new Uint8Array(v.buffer))}`
     default:
       console.warn('cyclepack:', v)
-      return '{' + createObject(v, cache, id, cb).slice(0, -1) + '}'
+      return createObject(v, cache, id, cb)
       // return 'l'
   }
 }

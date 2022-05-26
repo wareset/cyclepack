@@ -37,7 +37,7 @@ test('Base:', () => {
   expect(thereandback([])).toEqual([])
   expect(thereandback(new Array(12))).toEqual(new Array(12))
   const array = [1,,, 4, 5,,, 8, 9]
-  array.qwe = 1212, array['0123'] = 11
+  array.qwe = 1212, array['0123'] = 11, array[1.23] = 13
   expect(thereandback(array)).toEqual(array)
   // eslint-disable-next-line array-bracket-spacing
   const array2 = [1,,, [{ 4: 4 }, 5,,, ], [, 8, 9]]
