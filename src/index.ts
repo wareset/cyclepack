@@ -43,13 +43,13 @@ const _run_ = (
     case 'Symbol':
       return 'H' + _run_(v.toString().slice(7, -1), cache, id, cb)
 
-    case 'Error':
-    case 'EvalError':
-    case 'RangeError':
-    case 'ReferenceError':
-    case 'SyntaxError':
-    case 'TypeError':
-    case 'URIError': {
+    // case 'EvalError':
+    // case 'RangeError':
+    // case 'ReferenceError':
+    // case 'SyntaxError':
+    // case 'TypeError':
+    // case 'URIError':
+    case 'Error': {
       let res = createObject(v, cache, id, cb).slice(0, -1)
       if (res.length > 1) res += ','
       return 'E' + v.name.slice(0, 2) + res +
