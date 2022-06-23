@@ -27,17 +27,17 @@ const createObject: typeof _run_ = (v, cache, id, cb): string => {
 const _run_ = (
   v: any, cache: Map<any, string>, id: [number], cb: Function | null
 ): string => {
-  const key = cache.get(v)
-  if (key) return key!
+  let n = cache.get(v)
+  if (n) return n!
   cache.set(v, setId(id))
-  switch (__OPROTO__.toString.call(v).slice(8, -1)) {
+  switch (n = __OPROTO__.toString.call(v).slice(8, -1)) {
     case 'BigInt':
       return 'L' + _run_('' + v, cache, id, cb)
 
     case 'Object':
       return createObject(v, cache, id, cb)
     case 'Function':
-      return 'F' + _run_('' + (cb && cb(v) || v.name), cache, id, cb)
+      return 'Z' + _run_('' + (cb && cb(v) || v.name), cache, id, cb)
     case 'Boolean':
       return 'B' + +v
     case 'Symbol':
@@ -82,24 +82,17 @@ const _run_ = (
       if ((j = v.length) > i) for (;i <= j; i++) res += sep, sep = ','
       return res + ']'
     }
+
     case 'Int8Array':
-      return `I8A${stringifyFast(v)}`
     case 'Uint8Array':
-      return `U8A${stringifyFast(v)}`
     case 'Uint8ClampedArray':
-      return `U8C${stringifyFast(v)}`
     case 'Int16Array':
-      return `I16${stringifyFast(v)}`
     case 'Uint16Array':
-      return `U16${stringifyFast(v)}`
     case 'Int32Array':
-      return `I32${stringifyFast(v)}`
     case 'Uint32Array':
-      return `U32${stringifyFast(v)}`
     case 'Float32Array':
-      return `Y32${stringifyFast(v)}`
     case 'Float64Array':
-      return `Y64${stringifyFast(v)}`
+      return `${n[0] + n[4] + n[5]}${v.length}${stringifyFast(v)}`
 
     case 'Map': {
       const data: [string, any, [number], any, string] = ['M(', cache, id, cb, '']
@@ -121,9 +114,8 @@ const _run_ = (
     }
       
     case 'ArrayBuffer':
-      return `AB${stringifyFast(new Uint8Array(new DataView(v).buffer))}`
     case 'DataView':
-      return `AV${stringifyFast(new Uint8Array(v.buffer))}`
+      return `A${n[0]}${(v = new Int8Array(n[0] === 'D' ? v.buffer : v)).length}${stringifyFast(v)}`
     default:
       console.warn('cyclepack:', v)
       return createObject(v, cache, id, cb)
@@ -131,25 +123,26 @@ const _run_ = (
   }
 }
 
-const DEFS_FOR_STRINGIFY = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, null, void 0, NaN, true, false, 1 / 0, -1 / 0]
-  .map((v, k) => [v, setId([k])]) as any
+const DEFS_FOR_STRINGIFY =
+  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, null, void 0, NaN, true, false, 1 / 0, -1 / 0]
+    .map((v, k) => [v, setId([k])]) as any
 
-const build = (v: any, proxyForFunctions?: TypeBuildProxyForFunctions): string =>
-  _run_(v, new Map(DEFS_FOR_STRINGIFY), [17], proxyForFunctions!)
+const build = (
+  thing: any, proxyForFunctions?: TypeBuildProxyForFunctions
+): string =>
+  _run_(thing, new Map(DEFS_FOR_STRINGIFY), [17], proxyForFunctions!)
 
 const REG_LETTER = /[a-z]/
 const REG_SYSTEM = /["/{}[\]():,]/
 const parse = (a: string, proxyForFunctions?: TypeParseProxyForFunctions): any => {
-  // const cache = new Map(DEFS_FOR_PARSE)
   const id: [number] = [17]
   const cache: { [key: string]: any } = {}
   for (let i = id[0]; i-- > 0;) cache[DEFS_FOR_STRINGIFY[i][1]] = DEFS_FOR_STRINGIFY[i][0]
 
   const res: any[] = []
-  // eslint-disable-next-line prefer-const
   let cur: any = { v: res, t: '[', i: 0 }, newCur: any
   const queue: { v: any, t: any, i: number }[] = [cur]
-  let v: any, k: any = res, needCache: boolean
+  let v: any, k: any = res, needCache: boolean, caches: any[]
   const IKS: any[] = []
   for (let s: string, l = a.length - 1, i = -1; i++ < l;) {
     needCache = true
@@ -158,77 +151,53 @@ const parse = (a: string, proxyForFunctions?: TypeParseProxyForFunctions): any =
         // eslint-disable-next-line no-new-wrappers
         v = new Boolean(+a[++i])
         break
-      case 'I':
-      case 'U':
-      case 'Y': {
-        let Ctor: any
-        switch (s += a[++i] + a[++i]) {
-          case 'I8A':
-            Ctor = Int8Array
-            break
-          case 'U8A':
-            Ctor = Uint8Array
-            break
-          case 'U8C':
-            Ctor = Uint8ClampedArray
-            break
-          case 'I16':
-            Ctor = Int16Array
-            break
-          case 'U16':
-            Ctor = Uint16Array
-            break
-          case 'I32':
-            Ctor = Int32Array
-            break
-          case 'U32':
-            Ctor = Uint32Array
-            break
-          case 'Y32':
-            Ctor = Float32Array
-            break
-          case 'Y64':
-            Ctor = Float64Array
-            break
-          default:
-            throw s
+      case 'E'/* Error */: {
+        switch (a[++i] + a[++i]) {
+          case 'Ev': v = EvalError; break
+          case 'Ra': v = RangeError; break
+          case 'Re': v = ReferenceError; break
+          case 'Sy': v = SyntaxError; break
+          case 'Ty': v = TypeError; break
+          case 'UR': v = URIError; break
+          case 'Er':
+          default: v = Error
         }
-        v = new Ctor(a.slice(i += 2, i = a.indexOf('"', ++i)).split(','))
+        newCur = { v: v = new v(''), t: a[++i] }
         break
       }
-      case 'E'/* Error */: {
-        let Ctor: any
-        switch (s += a[++i] + a[++i]) {
-          case 'EEv':
-            Ctor = EvalError
-            break
-          case 'ERa':
-            Ctor = RangeError
-            break
-          case 'ERe':
-            Ctor = ReferenceError
-            break
-          case 'ESy':
-            Ctor = SyntaxError
-            break
-          case 'ETy':
-            Ctor = TypeError
-            break
-          case 'EUR':
-            Ctor = URIError
-            break
-          case 'EEr':
-          default:
-            Ctor = Error
+      case 'I':
+      case 'U':
+      case 'F': {
+        switch (a[++i] + a[++i]) {
+          case 'Ar': v = Int8Array; break
+          case '8A': v = Uint8Array; break
+          case '8C': v = Uint8ClampedArray; break
+          case '6A': v = Int16Array; break
+          case '16': v = Uint16Array; break
+          case '2A': v = Int32Array; break
+          case '32': v = Uint32Array; break
+          case 't3': v = Float32Array; break
+          case 't6': v = Float64Array; break
+          default: throw s
         }
-        newCur = { v: v = new Ctor(''), t: a[++i] }
+        s = ''; for (;a[++i] !== '"';) s += a[i]; v = new v(+s)
+        for (let k = 0, n = ''; ;) {
+          if (a[++i] === ',' || a[i] === '"') {
+            v[k++] = +n, n = ''; if (a[i] === '"') break
+          } else n += a[i]
+        }
         break
       }
       case 'A': {
-        const isDataView = a[++i] !== 'B'
-        // @ts-ignore
-        v = new Uint8Array(a.slice(i += 2, i = a.indexOf('"', ++i)).split(',')).buffer
-        if (isDataView) v = new DataView(v)
+        s = a[++i]
+        v = ''; for (;a[++i] !== '"';) v += a[i]; v = new Int8Array(+v)
+        for (let k = 0, n = ''; ;) {
+          if (a[++i] === ',' || a[i] === '"') {
+            v[k++] = +n, n = ''; if (a[i] === '"') break
+          } else n += a[i]
+        }
+        v = v.buffer
+        if (s === 'D') v = new DataView(v)
         break
       }
       case 'L'/* BigInt */:
@@ -239,7 +208,7 @@ const parse = (a: string, proxyForFunctions?: TypeParseProxyForFunctions): any =
       case 'H'/* Symbol */:
       case 'S'/* new String */:
       case 'R'/* RegExp */:
-      case 'F'/* Function */:
+      case 'Z'/* Function */:
         IKS.push(s)
         continue
       case '"': {
@@ -262,8 +231,7 @@ const parse = (a: string, proxyForFunctions?: TypeParseProxyForFunctions): any =
       case ']':
       case '}':
       case ')':
-        queue.pop()
-        v = cur.v
+        queue.pop(), v = cur.v
         cur = queue[queue.length - 1]
         continue
       case ',':
@@ -281,14 +249,13 @@ const parse = (a: string, proxyForFunctions?: TypeParseProxyForFunctions): any =
     }
     
     if (IKS.length) {
-      const c = v
-      const caches: any[] = []
+      s = v, caches = []
       for (;IKS.length;) {
         caches.push(v = iksf(IKS.pop(), v, proxyForFunctions))
       }
       for (;caches.length;) cache[setId(id)] = caches.pop()
 
-      if (needCache) cache[setId(id)] = c, needCache = false
+      if (needCache) cache[setId(id)] = s, needCache = false
     }
     if (needCache) cache[setId(id)] = v
 

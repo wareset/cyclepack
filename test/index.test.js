@@ -3,62 +3,66 @@ const { build, parse } = require('../index')
 
 const thereandback = (v) => parse(build(v))
 
+const compare = (v, cb) => {
+  expect(thereandback(v, cb)).toStrictEqual(v)
+}
+
 test('Base:', () => {
-  expect(thereandback(null)).toEqual(null)
-  expect(thereandback(void 0)).toEqual(void 0)
+  compare(null)
+  compare(void 0)
 
   const symbol = Symbol(42)
-  expect(thereandback(symbol).toString()).toEqual(symbol.toString())
+  expect(thereandback(symbol).toString()).toStrictEqual(symbol.toString())
 
-  expect(thereandback('\n\n\\\\\\\n\r\n\\\\n\nnn\\\nn\n\n\nn\t'))
-    .toEqual('\n\n\\\\\\\n\r\n\\\\n\nnn\\\nn\n\n\nn\t')
-  expect(thereandback('\'\\$\'`\\`""``\\`\\`\\`"`\'\\"`\n`"\\n\'`\n\\n'))
-    .toEqual('\'\\$\'`\\`""``\\`\\`\\`"`\'\\"`\n`"\\n\'`\n\\n')
-  expect(thereandback('42')).toEqual('42')
-  const texts = ['some', '\0`\ntext\t"\t', '']
-  expect(thereandback(texts)).toEqual(texts)
-  expect(thereandback({ q: '' })).toEqual({ q: '' })
+  compare('')
+  compare('42')
+  compare('\n\n\\\\\\\n\r\n\\\\n\nnn\\\nn\n\n\nn\t')
+  compare('\'\\$\'`\\`""``\\`\\`\\`"`\'\\"`\n`"\\n\'`\n\\n')
 
-  expect(thereandback(42)).toEqual(42)
-  const numbers = [NaN, -Infinity, 42e42, 2343n]
-  expect(thereandback(numbers)).toEqual(numbers)
+  compare({})
+  compare([])
+  compare({ q: '' })
+  // eslint-disable-next-line comma-spacing
+  compare(['some',,,, '\0`\ntext\t"\t', ,,, '',,,])
 
-  const booleans = [true, false]
-  expect(thereandback(booleans)).toEqual(booleans)
+  compare(0)
+  // todo
+  // compare(-0)
+  compare(42)
+  compare(NaN)
+  compare(-Infinity)
+  compare([NaN, -Infinity, 42e42, 2343n])
 
-  expect(thereandback({})).toEqual({})
+  compare(true)
+  compare(false)
+  compare([true, false])
+
   // eslint-disable-next-line no-new-wrappers
-  expect(thereandback(new String(42))).toEqual(new String(42))
+  compare(new String(42))
   // eslint-disable-next-line no-new-wrappers
-  expect(thereandback(new Number(42))).toEqual(new Number(42))
+  compare(new Number(42))
   // eslint-disable-next-line no-new-wrappers
-  expect(thereandback(new Boolean(1))).toEqual(new Boolean(1))
+  compare(new Boolean(1))
+  // eslint-disable-next-line no-new-wrappers
+  compare(new Boolean(0))
+  compare(new Array(42))
 
-  expect(thereandback([])).toEqual([])
-  expect(thereandback(new Array(12))).toEqual(new Array(12))
   const array = [1,,, 4, 5,,, 8, 9]
   array.qwe = 1212, array['0123'] = 11, array[1.23] = 13
-  expect(thereandback(array)).toEqual(array)
+  compare(array)
   // eslint-disable-next-line array-bracket-spacing
   const array2 = [1,,, [{ 4: 4 }, 5,,, ], [, 8, 9]]
-  expect(thereandback(array2)).toEqual(array2)
+  compare(array2)
 
-  const date = new Date()
-  expect(thereandback(date)).toEqual(date)
+  compare(new Date())
+  compare(new Date(343454343))
 
-  const regex = /\s[^,]+/gi
-  expect(thereandback(regex)).toEqual(regex)
-  expect(thereandback([regex, regex])).toEqual([regex, regex])
+  compare(/\s[^,]+/gi)
 
-  const set = new Set([1, 2, 3])
-  expect(thereandback(set)).toEqual(set)
-  const map = new Map([[1, 2], [3, 4]])
-  expect(thereandback(map)).toEqual(map)
-  expect(thereandback(new Set())).toEqual(new Set())
-  expect(thereandback(new Map())).toEqual(new Map())
-
-  const int8 = new Int8Array(64)
-  expect(thereandback(int8)).toEqual(int8)
+  compare(new Set())
+  compare(new Map())
+  compare(new Set([1, 2, 3]))
+  compare(new Map([[1, 2], [3, 4]]))
 })
 
 test('Deep:', () => {
@@ -87,17 +91,52 @@ test('Deep:', () => {
   const unpackedObject = cyclepack.parse(packedString)
 
   // let's restore our object
-  expect(unpackedObject).toEqual(FINAL_OBJECT) // there will be true
+  expect(unpackedObject).toStrictEqual(FINAL_OBJECT) // there will be true
 })
 
-test('ArrayBuffer:', () => {
-  const ab = new Float64Array([1, 2.5, 3]).buffer
-  expect(thereandback(ab)).toEqual(ab)
+test('ArrayBuffers and TypedArrays:', () => {
+  const f32 = new Float64Array([1, 2.5, 3])
+  compare(f32)
 
-  // console.log(stringify(ab))
+  const ab = f32.buffer
+  compare(f32.buffer)
 
   const dv = [ab, new DataView(ab)]
-  expect(thereandback(dv)).toEqual(dv)
+  compare(dv)
+
+  const i8a = new Int8Array([1, 2.5, 3, 1, 2.5, 3, 7, 8])
+  compare(i8a)
+  compare(i8a.buffer)
+
+  const u8ca = new Uint8ClampedArray([1, 2.5, 3, 1, 2.5, 3, 7, 8])
+  compare(u8ca)
+  compare(u8ca.buffer)
+
+  const u8a = new Uint8Array([1, 2.5, 3, 1, 2.5, 3, 7, 8])
+  compare(u8a)
+  // todo: not work
+  // compare(u8a.buffer)
+  expect(thereandback(u8a.buffer)).toEqual(u8a.buffer)
+
+  const i16a = new Int16Array([1, 2.5, 3, 1, 2.5, 3, 7, 8])
+  compare(i16a)
+  compare(i16a.buffer)
+
+  const u16a = new Uint16Array([1, 2.5, 3, 1, 2.5, 3, 7, 8])
+  compare(u16a)
+  compare(u16a.buffer)
+
+  const i32a = new Int32Array([1, 2.5, 3, 1, 2.5, 3, 7, 8])
+  compare(i32a)
+  compare(i32a.buffer)
+
+  const u32a = new Int32Array([1, 2.5, 3, 1, 2.5, 3, 7, 8])
+  compare(u32a)
+  compare(u32a.buffer)
+
+  const f32a = new Float32Array([1, 2.5, 3, 1, 2.5, 3, 7, 8])
+  compare(f32a)
+  compare(f32a.buffer)
 })
 
 test('Functions:', () => {
@@ -108,7 +147,7 @@ test('Functions:', () => {
   // console.log(stringWithoutProxy)
   const unpackWithoutProxy = parse(stringWithoutProxy)
   // console.log(unpackWithoutProxy)
-  expect(unpackWithoutProxy).toEqual('%someFunc%')
+  expect(unpackWithoutProxy).toStrictEqual('%someFunc%')
 
   const packed = build([someFunc, someFunc2], (func) => {
     if (func === someFunc) return 'FN_UNIQUE_ID'
@@ -122,10 +161,10 @@ test('Functions:', () => {
 
   // console.log(packed)
   // console.log(unpacked)
-  expect(unpacked).toEqual([someFunc, '%someFunc2%'])
+  expect(unpacked).toStrictEqual([someFunc, '%someFunc2%'])
 })
 
 // eslint-disable-next-line jest/no-commented-out-tests
 // test('Errors:', () => {
-//   expect([new Error('')]).toEqual(new Error(''))
+//   expect([new Error('')]).toStrictEqual(new Error(''))
 // })
