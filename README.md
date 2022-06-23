@@ -57,7 +57,7 @@ expect(SOME_BIG_OBJECT).toStrictEqual(restoringObject)
 // the objects are completely equal
 ```
 
-2. Takes into account references to objects:
+2. Considers references to objects:
 ```js
 import cyclepack from 'cyclepack';
 
