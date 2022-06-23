@@ -134,7 +134,6 @@ import cyclepack from 'cyclepack';
 const SET = new Set([1, 2, 3, 4, 5])
 
 const setToCyclePack = cyclepack.pack(SET)
-console.log(setToCyclePack.length) // 63
 
 // jest
 expect(SET).toStrictEqual(cyclepack.unpack(setToCyclePack))
@@ -200,8 +199,8 @@ const packed = cyclepack.pack([someFunc, someFunc2], (func) => {
 })
 console.log(packed) // [Z"FN_UNIQUE_TEXT_ID",Z"someFunc2"]
 
-const unpacked = cyclepack.unpack(packed, (fname) => {
-  if (fname === 'FN_UNIQUE_TEXT_ID') return someFunc
+const unpacked = cyclepack.unpack(packed, (fnID) => {
+  if (fnID === 'FN_UNIQUE_TEXT_ID') return someFunc
   return null
 })
 console.log(unpacked) // [someFunc, '%someFunc2%']
