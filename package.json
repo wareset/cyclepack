@@ -1,8 +1,10 @@
 {
   "name": "cyclepack",
-  "version": "0.2.0",
+  "version": "1.0.0",
   "description": "Packing and unpacking of built-in objects while preserving instances",
   "keywords": [
+    "pack",
+    "unpack",
     "json",
     "minify",
     "circular",

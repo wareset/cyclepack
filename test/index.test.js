@@ -1,10 +1,11 @@
 const cyclepack = require('../index').default
-const { build, parse } = require('../index')
+const { pack, unpack } = require('../index')
 
-const thereandback = (v) => parse(build(v))
+const thereandback = (v) => unpack(pack(v))
 
-const compare = (v, cb) => {
-  expect(thereandback(v, cb)).toStrictEqual(v)
+const compare = (v) => {
+  expect(thereandback(v)).toStrictEqual(v)
+  expect(unpack(JSON.parse(pack(v, null, true)))).toStrictEqual(v)
 }
 
 test('Base:', () => {
@@ -82,13 +83,17 @@ test('Deep:', () => {
 
   // it turned out to be a very strange object
   const FINAL_OBJECT = [set, object, map, set, object, array]
+  compare(FINAL_OBJECT)
 
   // let's create a string from it
-  const packedString = cyclepack.build(FINAL_OBJECT)
+  const packedString = cyclepack.pack(FINAL_OBJECT)
   console.log(packedString)
 
+  const packedStringStringify = cyclepack.pack(FINAL_OBJECT, null, true)
+  console.log(packedStringStringify)
+
   // let's restore our object
-  const unpackedObject = cyclepack.parse(packedString)
+  const unpackedObject = cyclepack.unpack(packedString)
 
   // let's restore our object
   expect(unpackedObject).toStrictEqual(FINAL_OBJECT) // there will be true
@@ -143,18 +148,18 @@ test('Functions:', () => {
   const someFunc = () => {}
   const someFunc2 = () => {}
 
-  const stringWithoutProxy = build(someFunc)
+  const stringWithoutProxy = pack(someFunc)
   // console.log(stringWithoutProxy)
-  const unpackWithoutProxy = parse(stringWithoutProxy)
+  const unpackWithoutProxy = unpack(stringWithoutProxy)
   // console.log(unpackWithoutProxy)
   expect(unpackWithoutProxy).toStrictEqual('%someFunc%')
 
-  const packed = build([someFunc, someFunc2], (func) => {
+  const packed = pack([someFunc, someFunc2], (func) => {
     if (func === someFunc) return 'FN_UNIQUE_ID'
     return null
   })
 
-  const unpacked = parse(packed, (fname) => {
+  const unpacked = unpack(packed, (fname) => {
     if (fname === 'FN_UNIQUE_ID') return someFunc
     return null
   })
