@@ -43,10 +43,6 @@
     "commit": "read -p 'Version [patch]: ' V; V=${V:-patch} && npm version --force --no-git-tag-version $V; echo $V && read -p 'Push? (y/N): ' G && read -p 'Publish? (y/N): ' P && npm run -s git:commit && case $G in Y|y) $(git push);; esac && case $P in Y|y) $(npm run -s git:set:tag && git push --tags && npm -s publish);; esac"
   },
   "devDependencies": {
-    "@babel/core": "^7.18.0",
-    "@babel/plugin-proposal-class-properties": "^7.18.0",
-    "@babel/plugin-transform-block-scoping": "^7.18.0",
-    "@babel/plugin-transform-template-literals": "^7.18.0",
     "dester": "0.x",
     "jest": "^28.1.3",
     "typescript": "4.x"
