@@ -32,7 +32,7 @@
   ],
   "scripts": {
     "test": "jest --",
-    "dester": "dester ./src ./ --babel -t types",
+    "dester": "dester ./src ./ -t types",
     "build": "npm run -s dester -- -r -m",
     "dev": "npm run -s dester -- -w --no-r -m",
     "pkg:name": "cat package.json | grep '\"name\":' | cut -d '\"' -f4",
