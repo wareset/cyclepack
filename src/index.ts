@@ -39,6 +39,9 @@ const _run_ = (
     case 'Object':
       return createObject(v, cache, id, cb, esc)
     case 'Function':
+    case 'AsyncFunction':
+    case 'GeneratorFunction':
+    case 'AsyncGeneratorFunction':
       return 'Z' + _run_('' + (cb && cb(v) || v.name), cache, id, cb, esc)
     case 'Boolean':
       return 'B' + +v
