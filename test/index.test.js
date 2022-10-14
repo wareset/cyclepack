@@ -67,7 +67,7 @@ test('Base:', () => {
 })
 
 test('Deep:', () => {
-  const numbers = [[[42, NaN, 2343n, 34,,, 2, -42, 424,, 24,, 424, 22, 4]]]
+  const numbers = [[[42, NaN, 2343n, 34,,, 2, -42, -333, 333, 424,, 24,, 424, 22, 4]]]
   const texts = [,,, 'some', numbers, ,,, numbers,, '42']
   const set = new Set([1, { numbers }, texts, new Int16Array(2)])
   const date = new Date()
