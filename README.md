@@ -118,7 +118,7 @@ SOME_BIG_OBJECT.r = SOME_BIG_OBJECT
 
 // Example cyclepack.pack:
 const objectToCyclePack = cyclepack.pack(SOME_BIG_OBJECT)
-console.log(objectToCyclePack.length) // 63
+console.log(objectToCyclePack.length)
 
 console.log(objectToCyclePack)
 // {"q":b,"w":c,"e":d,"r":r}
