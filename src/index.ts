@@ -44,7 +44,7 @@ const _run_ = (
     case 'AsyncGeneratorFunction':
       return 'Z' + _run_('' + (cb && cb(v) || v.name), cache, id, cb, esc)
     case 'Boolean':
-      return 'B' + +v
+      return 'P' + +v
     case 'Symbol':
       return 'H' + _run_(v.toString().slice(7, -1), cache, id, cb, esc)
 
@@ -97,6 +97,8 @@ const _run_ = (
     case 'Uint32Array':
     case 'Float32Array':
     case 'Float64Array':
+    case 'BigInt64Array':
+    case 'BigUint64Array':
       return `${n[0] + n[4] + n[5]}${v.length}${stringifyFast(v, esc)}`
 
     case 'Map': {
@@ -117,6 +119,7 @@ const _run_ = (
       return data[0] + ')'
     }
       
+    // TODO: SharedArrayBuffer
     case 'ArrayBuffer':
     case 'DataView':
       return `A${n[0]}${(v = new Int8Array(n[0] === 'D' ? v.buffer : v)).length}${stringifyFast(v, esc)}`
@@ -152,12 +155,13 @@ const unpack = (a: string, proxyForFunctions?: TypeParseProxyForFunctions): any 
   for (let s: string, l = a.length - 1, i = -1; i++ < l;) {
     needCache = true
     switch (s = a[i]) {
-      case 'B':
+      case 'P':
         // eslint-disable-next-line no-new-wrappers
         v = new Boolean(+a[++i])
         break
       case 'E'/* Error */: {
         switch (a[++i] + a[++i]) {
+          case 'Ag': v = AggregateError; break
           case 'Ev': v = EvalError; break
           case 'Ra': v = RangeError; break
           case 'Re': v = ReferenceError; break
@@ -185,7 +189,8 @@ const unpack = (a: string, proxyForFunctions?: TypeParseProxyForFunctions): any 
           case 't6': v = Float64Array; break
           default: throw s
         }
-        s = ''; for (;a[++i] !== '"';) s += a[i]; v = new v(+s)
+        s = ''
+        for (;a[++i] !== '"';) s += a[i]; v = new v(+s)
         for (let k = 0, n = ''; ;) {
           if (a[++i] === ',' || a[i] === '"') {
             v[k++] = +n, n = ''; if (a[i] === '"') break
@@ -193,9 +198,24 @@ const unpack = (a: string, proxyForFunctions?: TypeParseProxyForFunctions): any 
         }
         break
       }
+      case 'B': {
+        switch (a[++i] + a[++i]) {
+          case 'nt': v = BigInt64Array; break
+          case 'in': v = BigUint64Array; break
+          default: throw s
+        }
+        s = ''
+        for (;a[++i] !== '"';) s += a[i]; v = new v(+s)
+        for (let k = 0, n = ''; ;) {
+          if (a[++i] === ',' || a[i] === '"') {
+            v[k++] = BigInt(n), n = ''; if (a[i] === '"') break
+          } else n += a[i]
+        }
+        break
+      }
       case 'A': {
-        s = a[++i]
-        v = ''; for (;a[++i] !== '"';) v += a[i]; v = new Int8Array(+v)
+        v = '', s = a[++i]
+        for (;a[++i] !== '"';) v += a[i]; v = new Int8Array(+v)
         for (let k = 0, n = ''; ;) {
           if (a[++i] === ',' || a[i] === '"') {
             v[k++] = +n, n = ''; if (a[i] === '"') break

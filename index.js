@@ -27,10 +27,13 @@ var e = Object.prototype, r = e => {
         return s(c, i, o, u, l);
 
       case "Function":
+      case "AsyncFunction":
+      case "GeneratorFunction":
+      case "AsyncGeneratorFunction":
         return "Z" + n("" + (u && u(c) || c.name), i, o, u, l);
 
       case "Boolean":
-        return "B" + +c;
+        return "P" + +c;
 
       case "Symbol":
         return "H" + n(c.toString().slice(7, -1), i, o, u, l);
@@ -52,12 +55,12 @@ var e = Object.prototype, r = e => {
         return "R" + n(c.source + "," + c.flags, i, o, u, l);
 
       case "Array":
-        var b, y = "[", v = "", p = 0;
-        for (var k in c) {
-            if (a.test(k)) y += v + n(k, i, o, u, l) + ":", v = ""; else if ((b = +k) > p++) for (;p <= b; p++) y += ",";
-            y += v + n(c[k], i, o, u, l), v = ",";
+        var b, y = "[", g = "", k = 0;
+        for (var A in c) {
+            if (a.test(A)) y += g + n(A, i, o, u, l) + ":", g = ""; else if ((b = +A) > k++) for (;k <= b; k++) y += ",";
+            y += g + n(c[A], i, o, u, l), g = ",";
         }
-        if ((b = c.length) > p) for (;p <= b; p++) y += v, v = ",";
+        if ((b = c.length) > k) for (;k <= b; k++) y += g, g = ",";
         return y + "]";
 
       case "Int8Array":
@@ -69,20 +72,22 @@ var e = Object.prototype, r = e => {
       case "Uint32Array":
       case "Float32Array":
       case "Float64Array":
+      case "BigInt64Array":
+      case "BigUint64Array":
         return "" + (f[0] + f[4] + f[5]) + c.length + t(c, l);
 
       case "Map":
-        var g = [ "M(", i, o, u, l, "" ];
+        var v = [ "M(", i, o, u, l, "" ];
         return c.forEach((function(e, r) {
             this[0] += this[5] + n(r, this[1], this[2], this[3], this[4]) + ":" + n(e, this[1], this[2], this[3], this[4]), 
             this[5] = ",";
-        }), g), g[0] + ")";
+        }), v), v[0] + ")";
 
       case "Set":
-        var A = [ "T(", i, o, u, l, "" ];
+        var p = [ "T(", i, o, u, l, "" ];
         return c.forEach((function(e) {
             this[0] += this[5] + n(e, this[1], this[2], this[3], this[4]), this[5] = ",";
-        }), A), A[0] + ")";
+        }), p), p[0] + ")";
 
       case "ArrayBuffer":
       case "DataView":
@@ -93,18 +98,22 @@ var e = Object.prototype, r = e => {
     }
 }, c = [ 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, null, void 0, NaN, !0, !1, 1 / 0, -1 / 0 ].map(((e, a) => [ e, r([ a ]) ])), i = (e, r, a) => (a ? '"' : "") + n(e, new Map(c), [ 17 ], r, a) + (a ? '"' : ""), o = /[a-z]/, u = /["/{}[\]():,]/, l = (e, a) => {
     for (var t = [ 17 ], s = {}, n = t[0]; n-- > 0; ) s[c[n][1]] = c[n][0];
-    for (var i, l, h, b, y, v = [], p = {
-        v: v,
+    for (var i, l, h, b, y, g = [], k = {
+        v: g,
         t: "[",
         i: 0
-    }, k = [ p ], g = v, A = [], w = e.length - 1, S = -1; S++ < w; ) {
-        switch (h = !0, y = e[S]) {
-          case "B":
-            l = new Boolean(+e[++S]);
+    }, A = [ k ], v = g, p = [], w = e.length - 1, d = -1; d++ < w; ) {
+        switch (h = !0, y = e[d]) {
+          case "P":
+            l = new Boolean(+e[++d]);
             break;
 
           case "E":
-            switch (e[++S] + e[++S]) {
+            switch (e[++d] + e[++d]) {
+              case "Ag":
+                l = AggregateError;
+                break;
+
               case "Ev":
                 l = EvalError;
                 break;
@@ -134,14 +143,14 @@ var e = Object.prototype, r = e => {
             }
             i = {
                 v: l = new l(""),
-                t: e[++S]
+                t: e[++d]
             };
             break;
 
           case "I":
           case "U":
           case "F":
-            switch (e[++S] + e[++S]) {
+            switch (e[++d] + e[++d]) {
               case "Ar":
                 l = Int8Array;
                 break;
@@ -181,19 +190,39 @@ var e = Object.prototype, r = e => {
               default:
                 throw y;
             }
-            for (y = ""; '"' !== e[++S]; ) y += e[S];
+            for (y = ""; '"' !== e[++d]; ) y += e[d];
             l = new l(+y);
-            for (var d = 0, E = ""; ;) if ("," === e[++S] || '"' === e[S]) {
-                if (l[d++] = +E, E = "", '"' === e[S]) break;
-            } else E += e[S];
+            for (var E = 0, S = ""; ;) if ("," === e[++d] || '"' === e[d]) {
+                if (l[E++] = +S, S = "", '"' === e[d]) break;
+            } else S += e[d];
+            break;
+
+          case "B":
+            switch (e[++d] + e[++d]) {
+              case "nt":
+                l = BigInt64Array;
+                break;
+
+              case "in":
+                l = BigUint64Array;
+                break;
+
+              default:
+                throw y;
+            }
+            for (y = ""; '"' !== e[++d]; ) y += e[d];
+            l = new l(+y);
+            for (var I = 0, m = ""; ;) if ("," === e[++d] || '"' === e[d]) {
+                if (l[I++] = BigInt(m), m = "", '"' === e[d]) break;
+            } else m += e[d];
             break;
 
           case "A":
-            for (y = e[++S], l = ""; '"' !== e[++S]; ) l += e[S];
+            for (l = "", y = e[++d]; '"' !== e[++d]; ) l += e[d];
             l = new Int8Array(+l);
-            for (var m = 0, I = ""; ;) if ("," === e[++S] || '"' === e[S]) {
-                if (l[m++] = +I, I = "", '"' === e[S]) break;
-            } else I += e[S];
+            for (var U = 0, B = ""; ;) if ("," === e[++d] || '"' === e[d]) {
+                if (l[U++] = +B, B = "", '"' === e[d]) break;
+            } else B += e[d];
             l = l.buffer, "D" === y && (l = new DataView(l));
             break;
 
@@ -206,11 +235,11 @@ var e = Object.prototype, r = e => {
           case "S":
           case "R":
           case "Z":
-            A.push(y);
+            p.push(y);
             continue;
 
           case '"':
-            for (var R = !1; S++ < w && (y += e[S], R || '"' !== e[S]); R = !R && "\\" === e[S]) ;
+            for (var R = !1; d++ < w && (y += e[d], R || '"' !== e[d]); R = !R && "\\" === e[d]) ;
             l = JSON.parse(y);
             break;
 
@@ -233,43 +262,43 @@ var e = Object.prototype, r = e => {
             i = {
                 v: l = new Set,
                 t: y
-            }, S++;
+            }, d++;
             break;
 
           case "M":
             i = {
                 v: l = new Map,
                 t: y
-            }, S++;
+            }, d++;
             break;
 
           case "]":
           case "}":
           case ")":
-            k.pop(), l = p.v, p = k[k.length - 1];
+            A.pop(), l = k.v, k = A[A.length - 1];
             continue;
 
           case ",":
-            g = v, "[" === p.t && (p.v.length = ++p.i);
+            v = g, "[" === k.t && (k.v.length = ++k.i);
             continue;
 
           case ":":
-            g = l, "[" === p.t && (p.v.length = p.i--);
+            v = l, "[" === k.t && (k.v.length = k.i--);
             continue;
 
           default:
-            for (;S++ < w && !u.test(e[S]) ? y += e[S] : (S--, 0); ) ;
+            for (;d++ < w && !u.test(e[d]) ? y += e[d] : (d--, 0); ) ;
             l = o.test(y[0]) ? (h = !1, s[y]) : +y;
         }
-        if (A.length) {
-            for (y = l, b = []; A.length; ) b.push(l = f(A.pop(), l, a));
+        if (p.length) {
+            for (y = l, b = []; p.length; ) b.push(l = f(p.pop(), l, a));
             for (;b.length; ) s[r(t)] = b.pop();
             h && (s[r(t)] = y, h = !1);
         }
-        h && (s[r(t)] = l), "[" === p.t ? g === v ? p.v[p.i] = l : (p.v[g] = l, g = v) : "T" === p.t ? p.v.add(l) : g !== v && ("{" === p.t ? p.v[g] = l : p.v.set(g, l), 
-        g = v), i && (k.push(p = i), i = null);
+        h && (s[r(t)] = l), "[" === k.t ? v === g ? k.v[k.i] = l : (k.v[v] = l, v = g) : "T" === k.t ? k.v.add(l) : v !== g && ("{" === k.t ? k.v[v] = l : k.v.set(v, l), 
+        v = g), i && (A.push(k = i), i = null);
     }
-    return v[0];
+    return g[0];
 }, f = (e, r, a) => {
     switch (e) {
       case "-":

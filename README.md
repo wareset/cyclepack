@@ -163,8 +163,11 @@ expect(SET).toStrictEqual(cyclepack.unpack(setToCyclePack))
 - Uint32Array
 - Float32Array
 - Float64Array
-- Function* (more on this below)
+- BigInt64Array
+- BigUint64Array
+- Function* (Async and Generator) (more on this below)
 - Error* (more on this below)
+- AggregateError*
 - EvalError*
 - RangeError*
 - ReferenceError*

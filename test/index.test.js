@@ -100,13 +100,18 @@ test('Deep:', () => {
 })
 
 test('ArrayBuffers and TypedArrays:', () => {
+  const ab = new ArrayBuffer(8)
+  // todo: not work
+  // compare(ab)
+  compare(new Int8Array(ab))
+
   const f32 = new Float64Array([1, 2.5, 3])
   compare(f32)
 
-  const ab = f32.buffer
-  compare(f32.buffer)
+  const ab2 = f32.buffer
+  compare(ab2)
 
-  const dv = [ab, new DataView(ab)]
+  const dv = [ab2, new DataView(ab2), new DataView(ab)]
   compare(dv)
 
   const i8a = new Int8Array([1, 2.5, 3, 1, 2.5, 3, 7, 8])
@@ -142,6 +147,14 @@ test('ArrayBuffers and TypedArrays:', () => {
   const f32a = new Float32Array([1, 2.5, 3, 1, 2.5, 3, 7, 8])
   compare(f32a)
   compare(f32a.buffer)
+
+  const bi64a = new BigInt64Array(2)
+  compare(bi64a)
+  compare(bi64a.buffer)
+
+  const bu64a = new BigUint64Array(2)
+  compare(bu64a)
+  compare(bu64a.buffer)
 })
 
 test('Functions:', () => {
