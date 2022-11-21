@@ -1,14 +1,14 @@
 const cyclepack = require('../index').default
 const { pack, unpack } = require('../index')
 
-const thereandback = (v) => unpack(pack(v))
+function thereandback(v) { return unpack(pack(v)) }
 
-const compare = (v) => {
+function compare(v) {
   expect(thereandback(v)).toStrictEqual(v)
   expect(unpack(JSON.parse(pack(v, null, true)))).toStrictEqual(v)
 }
 
-test('Base:', () => {
+test('Base:', function() {
   compare(null)
   compare(void 0)
 
@@ -66,7 +66,7 @@ test('Base:', () => {
   compare(new Map([[1, 2], [3, 4]]))
 })
 
-test('Deep:', () => {
+test('Deep:', function() {
   const numbers = [[[42, NaN, 2343n, 34,,, 2, -42, -333, 333, 424,, 24,, 424, 22, 4]]]
   const texts = [,,, 'some', numbers, ,,, numbers,, '42']
   const set = new Set([1, { numbers }, texts, new Int16Array(2)])
@@ -99,7 +99,7 @@ test('Deep:', () => {
   expect(unpackedObject).toStrictEqual(FINAL_OBJECT) // there will be true
 })
 
-test('ArrayBuffers and TypedArrays:', () => {
+test('ArrayBuffers and TypedArrays:', function() {
   const ab = new ArrayBuffer(8)
   // todo: not work
   // compare(ab)
@@ -157,9 +157,9 @@ test('ArrayBuffers and TypedArrays:', () => {
   compare(bu64a.buffer)
 })
 
-test('Functions:', () => {
-  const someFunc = () => {}
-  const someFunc2 = () => {}
+test('Functions:', function() {
+  function someFunc() {}
+  function someFunc2() {}
 
   const stringWithoutProxy = pack(someFunc)
   // console.log(stringWithoutProxy)
@@ -167,12 +167,12 @@ test('Functions:', () => {
   // console.log(unpackWithoutProxy)
   expect(unpackWithoutProxy).toStrictEqual('%someFunc%')
 
-  const packed = pack([someFunc, someFunc2], (func) => {
+  const packed = pack([someFunc, someFunc2], function(func) {
     if (func === someFunc) return 'FN_UNIQUE_ID'
     return null
   })
 
-  const unpacked = unpack(packed, (fname) => {
+  const unpacked = unpack(packed, function(fname) {
     if (fname === 'FN_UNIQUE_ID') return someFunc
     return null
   })
