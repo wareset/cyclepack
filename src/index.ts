@@ -16,14 +16,15 @@ function stringifyFast(s: any, esc: boolean): string {
 }
 
 const createObject = (function(v, cache, id, cb, esc): string {
-  let res = '{', sep = ''
+  const res: string[] = ['{']
+  let sep = ''
   for (const k in v) {
     if (Object.prototype.hasOwnProperty.call(v, k)) {
-      res += sep + _run_(k, cache, id, cb, esc) +
-        ':' + _run_(v[k], cache, id, cb, esc), sep = ','
+      res.push(sep, _run_(k, cache, id, cb, esc), ':', _run_(v[k], cache, id, cb, esc))
+      sep = ','
     }
   }
-  return res + '}'
+  return res.push('}'), res.join('')
 }) as typeof _run_
 
 function _run_(
@@ -77,15 +78,16 @@ function _run_(
       return 'R' + _run_(v.source + ',' + v.flags, cache, id, cb, esc)
 
     case 'Array': {
-      let res = '[', sep = ''
+      const res: string[] = ['[']
+      let sep = ''
       let i = 0, j: number
       for (const k in v) {
-        if (REG_NOT_INT.test(k)) res += sep + _run_(k, cache, id, cb, esc) + ':', sep = ''
-        else if ((j = +k) > i++) for (;i <= j; i++) res += ','
-        res += sep + _run_(v[k], cache, id, cb, esc), sep = ','
+        if (REG_NOT_INT.test(k)) res.push(sep, _run_(k, cache, id, cb, esc), ':'), sep = ''
+        else if ((j = +k) > i++) for (;i <= j; i++) res.push(',')
+        res.push(sep, _run_(v[k], cache, id, cb, esc)), sep = ','
       }
-      if ((j = v.length) > i) for (;i <= j; i++) res += sep, sep = ','
-      return res + ']'
+      if ((j = v.length) > i) for (;i <= j; i++) res.push(sep), sep = ','
+      return res.push(']'), res.join('')
     }
 
     case 'Int8Array':
@@ -102,21 +104,30 @@ function _run_(
       return `${n[0] + n[4] + n[5]}${v.length}${stringifyFast(v, esc)}`
 
     case 'Map': {
-      const data: [string, any, [number], any, boolean, string] = ['M(', cache, id, cb, esc, '']
+      const data: [string[], any, [number], any, boolean, string] = [['M('], cache, id, cb, esc, '']
       // eslint-disable-next-line func-names
       v.forEach(function(this: typeof data, v: any, k: any) {
-        this[0] += this[5] + _run_(k, this[1], this[2], this[3], this[4]) +
-          ':' + _run_(v, this[1], this[2], this[3], this[4]), this[5] = ','
+        this[0].push(
+          this[5],
+          _run_(k, this[1], this[2], this[3], this[4]),
+          ':',
+          _run_(v, this[1], this[2], this[3], this[4])
+        )
+        this[5] = ','
       }, data)
-      return data[0] + ')'
+      return data[0].push(')'), data[0].join('')
     }
     case 'Set': {
-      const data: [string, any, [number], any, boolean, string] = ['T(', cache, id, cb, esc, '']
+      const data: [string[], any, [number], any, boolean, string] = [['T('], cache, id, cb, esc, '']
       // eslint-disable-next-line func-names
       v.forEach(function(this: typeof data, v: any) {
-        this[0] += this[5] + _run_(v, this[1], this[2], this[3], this[4]), this[5] = ','
+        this[0].push(
+          this[5],
+          _run_(v, this[1], this[2], this[3], this[4])
+        )
+        this[5] = ','
       }, data)
-      return data[0] + ')'
+      return data[0].push(')'), data[0].join('')
     }
       
     // TODO: SharedArrayBuffer
@@ -136,13 +147,17 @@ const DEFS_FOR_STRINGIFY =
 function pack(
   thing: any, proxyForFunctions?: TypeBuildProxyForFunctions | null, stringify?: boolean
 ): string {
-  return (stringify ? '"' : '') +
-  _run_(thing, new Map(DEFS_FOR_STRINGIFY), [17], proxyForFunctions!, stringify!) +
-  (stringify ? '"' : '')
+  const q = stringify ? '"' : ''
+  return [
+    q,
+    _run_(thing, new Map(DEFS_FOR_STRINGIFY), [17], proxyForFunctions!, stringify!),
+    q
+  ].join('')
 }
 
 const REG_LETTER = /[a-z]/
 const REG_SYSTEM = /["/{}[\]():,]/
+const META: any = { b: '\b', t: '\t', n: '\n', f: '\f', r: '\r' }
 function unpack(a: string, proxyForFunctions?: TypeParseProxyForFunctions): any {
   const id: [number] = [17]
   const cache: { [key: string]: any } = {}
@@ -153,7 +168,7 @@ function unpack(a: string, proxyForFunctions?: TypeParseProxyForFunctions): any 
   const queue: { v: any, t: any, i: number }[] = [cur]
   let v: any, k: any = res, needCache: boolean, caches: any[]
   const IKS: any[] = []
-  for (let s: string, l = a.length - 1, i = -1; i++ < l;) {
+  for (let s: string, l = a.length, i = 0; i < l; i++) {
     needCache = true
     switch (s = a[i]) {
       case 'P':
@@ -238,8 +253,23 @@ function unpack(a: string, proxyForFunctions?: TypeParseProxyForFunctions): any 
         IKS.push(s)
         continue
       case '"': {
-        for (let q = !1; i++ < l && (s += a[i], q || a[i] !== '"'); q = q ? !1 : a[i] === '\\');
-        v = JSON.parse(s)
+        v = []
+        // for (let q = !1; ++i < l && (s += a[i], q || a[i] !== '"'); q = q ? !1 : a[i] === '\\');
+        // v = JSON.parse(s)
+        for (;++i < l && a[i] !== s;) {
+          v.push(
+            a[i] !== '\\'
+              ? a[i]
+              : a[++i] in META
+                ? META[a[i]]
+                : a[i] === 'u'
+                  ? String.fromCharCode(parseInt(
+                    a[++i] + a[++i] + a[++i] + a[++i], 16
+                  ))
+                  : a[i] || ''
+          )
+        }
+        v = v.join('')
         break
       }
       case '{':
@@ -269,7 +299,7 @@ function unpack(a: string, proxyForFunctions?: TypeParseProxyForFunctions): any 
         if (cur.t === '[') cur.v.length = cur.i--
         continue
       default: {
-        for (;i++ < l && !REG_SYSTEM.test(a[i]) ? s += a[i] : (i--, false););
+        for (;++i < l && !REG_SYSTEM.test(a[i]) ? s += a[i] : (i--, false););
         v = REG_LETTER.test(s[0]) ? (needCache = false, cache[s]) : +s
       }
     }

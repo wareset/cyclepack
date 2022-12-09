@@ -1,6 +1,6 @@
 {
   "name": "cyclepack",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "Packing and unpacking of built-in objects while preserving instances",
   "keywords": [
     "pack",
@@ -40,8 +40,8 @@
   },
   "scripts": {
     "test": "jest --",
-    "build": "dester --ie",
-    "dev": "dester --ie -w"
+    "build": "dester --ie -m",
+    "dev": "dester --ie -mw"
   },
   "devDependencies": {
     "dester": "1.0.x",
