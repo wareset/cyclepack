@@ -23,7 +23,7 @@ export function stringEncode(s: string): string {
   })
 }
 
-const rx_for_decode = /\\u(....)|\\.?/g
+const rx_for_decode = /\\u([\da-zA-Z]{4})|\\.?/g
 export function stringDecode(s: string): string {
   return s.replace(rx_for_decode, function (v, unicode) {
     switch (v[1]) {
@@ -108,10 +108,10 @@ export function getGlobalObject() {
   return (
     globalObject ||
     (globalObject =
-      (typeof globalThis === 'object' && globalThis) ||
-      (typeof window === 'object' && window) ||
-      (typeof global === 'object' && global) ||
-      (typeof self === 'object' && self) ||
+      (typeof globalThis === (globalObject = 'object') && globalThis) ||
+      (typeof window === globalObject && window) ||
+      (typeof global === globalObject && global) ||
+      (typeof self === globalObject && self) ||
       // (function (this: any) {
       //   return this
       // })() ||

@@ -1,4 +1,4 @@
-export default function pack(variable: any, replace?: {
+export type IEncodeOptions = {
     allowNulls?: boolean;
     allowUndefineds?: boolean;
     allowEmptyObjects?: boolean;
@@ -7,4 +7,5 @@ export default function pack(variable: any, replace?: {
         [k: string]: any;
     }) => any);
     errors?: null | ((object: Error) => any);
-}): any;
+};
+export default function encode(variable: any, options?: IEncodeOptions): any;

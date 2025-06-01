@@ -21,17 +21,9 @@ import { stringEncode, keyToNumMayBe } from './utils'
 //   return s.join('')
 // }
 
-export default function uneval(
-  variable: any,
-  replace?: {
-    allowNulls?: boolean
-    allowUndefineds?: boolean
-    allowEmptyObjects?: boolean
-    functions?: null | ((fn: (...a: any) => any) => any)
-    classes?: null | ((object: { [k: string]: any }) => any)
-    errors?: null | ((object: Error) => any)
-  }
-) {
+import type { IEncodeOptions } from './encode'
+
+export default function uneval(variable: any, options?: IEncodeOptions) {
   const IS_NAN = {}
   const IS_NEG_ZERO = {}
 
@@ -48,13 +40,13 @@ export default function uneval(
   let functions: any
   let classes: any
   let errors: any
-  if (replace) {
-    allowNulls = replace.allowNulls
-    allowUndefineds = replace.allowUndefineds
-    allowEmptyObjects = replace.allowEmptyObjects
-    functions = replace.functions
-    classes = replace.classes
-    errors = replace.errors
+  if (options) {
+    allowNulls = options.allowNulls
+    allowUndefineds = options.allowUndefineds
+    allowEmptyObjects = options.allowEmptyObjects
+    functions = options.functions
+    classes = options.classes
+    errors = options.errors
   }
 
   function check_1(v: any) {
@@ -266,6 +258,7 @@ return _
           } else {
             v = 'void 0'
             listIgnore.push(listOrigin.pop())
+            // listIgnore.push(listOrigin.splice(idx, 1))
           }
         } else {
           v = 'v' + idx
@@ -275,15 +268,12 @@ return _
       v = v === null ? 'null' : 'void 0'
     }
 
-    // console.log(v, listOrigin[idx])
-    // console.log(111, listOrigin[idx])
     return v
   }
 
   parse(variable)
 
   let res: string
-  console.log(listResult)
   switch (listResult.length) {
     case 0:
       res = 'void 0'

@@ -36,13 +36,15 @@ function createClass(s: string) {
   return res
 }
 
-export default function unpack(
+export type IDecodeOptions = {
+  functions?: null | ((data: any) => any)
+  classes?: null | ((data: any) => any)
+  errors?: null | ((data: any) => any)
+}
+
+export default function decode(
   variable: string,
-  replace?: {
-    functions?: null | ((data: any) => any)
-    classes?: null | ((data: any) => any)
-    errors?: null | ((data: any) => any)
-  }
+  options?: IDecodeOptions
 ) {
   const data = jsonParse(variable)
   const temp: any = { '-1': null, '-2': void 0, '-3': void 0 }
@@ -50,10 +52,10 @@ export default function unpack(
   let functions: any
   let classes: any
   let errors: any
-  if (replace) {
-    functions = replace.functions
-    classes = replace.classes
-    errors = replace.errors
+  if (options) {
+    functions = options.functions
+    classes = options.classes
+    errors = options.errors
   }
 
   function setObjProps(o: any, a: any) {

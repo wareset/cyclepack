@@ -1,15 +1,17 @@
 import { stringEncode, arrayBufferToBase64, keyToNumMayBe } from './utils'
 
-export default function pack(
+export type IEncodeOptions = {
+  allowNulls?: boolean
+  allowUndefineds?: boolean
+  allowEmptyObjects?: boolean
+  functions?: null | ((fn: (...a: any) => any) => any)
+  classes?: null | ((object: { [k: string]: any }) => any)
+  errors?: null | ((object: Error) => any)
+}
+
+export default function encode(
   variable: any,
-  replace?: {
-    allowNulls?: boolean
-    allowUndefineds?: boolean
-    allowEmptyObjects?: boolean
-    functions?: null | ((fn: (...a: any) => any) => any)
-    classes?: null | ((object: { [k: string]: any }) => any)
-    errors?: null | ((object: Error) => any)
-  }
+  options?: IEncodeOptions
 ) {
   const IS_NAN = {}
   const IS_NEG_ZERO = {}
@@ -26,13 +28,13 @@ export default function pack(
   let functions: any
   let classes: any
   let errors: any
-  if (replace) {
-    allowNulls = replace.allowNulls
-    allowUndefineds = replace.allowUndefineds
-    allowEmptyObjects = replace.allowEmptyObjects
-    functions = replace.functions
-    classes = replace.classes
-    errors = replace.errors
+  if (options) {
+    allowNulls = options.allowNulls
+    allowUndefineds = options.allowUndefineds
+    allowEmptyObjects = options.allowEmptyObjects
+    functions = options.functions
+    classes = options.classes
+    errors = options.errors
   }
 
   function check_1(v: any) {
@@ -41,7 +43,6 @@ export default function pack(
   }
 
   function check_2(i: number) {
-    // console.log(1212, i, listResult[i])
     // return true
     return i !== -3 // && (allowUndefineds || i !== -2) && (allowNulls || i !== -1)
   }
@@ -259,6 +260,7 @@ export default function pack(
           listResult[idx] = n
         } else {
           listIgnore.push(listOrigin.pop())
+          // listIgnore.push(listOrigin.splice(idx, 1))
           idx = -3
         }
       }
