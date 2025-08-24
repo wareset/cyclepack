@@ -1,188 +1,261 @@
-const cyclepack = require('../index').default
-const { pack, unpack } = require('../index')
+const { encode, decode, uneval } = require('../dist/index')
 
-function thereandback(v) { return unpack(pack(v)) }
-
-function compare(v) {
-  expect(thereandback(v)).toStrictEqual(v)
-  expect(unpack(JSON.parse(pack(v, null, true)))).toStrictEqual(v)
+function encode_only(input, output, inputProps) {
+  expect(encode(input, inputProps)).toStrictEqual(output)
 }
 
-test('Base:', function() {
-  compare(null)
-  compare(void 0)
+function encode_decode(input, output = input, inputProps, outputProps) {
+  expect(decode(encode(input, inputProps), outputProps)).toStrictEqual(output)
 
-  const symbol = Symbol(42)
-  expect(thereandback(symbol).toString()).toStrictEqual(symbol.toString())
+  if (!outputProps) {
+    expect(Function(`return (${uneval(input, inputProps)})`)()).toStrictEqual(
+      output
+    )
+  }
+}
 
-  compare('')
-  compare('42')
-  compare('\n\n\\\\\\\n\r\n\\\\n\nnn\\\nn\n\n\nn\t')
-  compare('\'\\$\'`\\`""``\\`\\`\\`"`\'\\"`\n`"\\n\'`\n\\n')
+test('encode: primitives', function () {
+  // null
+  encode_only(null, 'n')
+  encode_only(null, '', { filterByList: [null] })
+  encode_decode(null)
 
-  compare({})
-  compare([])
-  compare({ q: '' })
-  // eslint-disable-next-line comma-spacing
-  compare(['some',,,, '\0`\ntext\t"\t', ,,, '',,,])
+  // undefined
+  encode_only(void 0, 'u')
+  encode_only(void 0, '', { filterByList: [void 0] })
+  encode_decode(void 0)
 
-  compare(0)
-  // todo
-  // compare(-0)
-  compare(42)
-  compare(NaN)
-  compare(-Infinity)
-  compare([NaN, -Infinity, 42e42, 2343n])
+  // boolean
+  encode_only(true, 't')
+  encode_only(true, '', { filterByList: [true] })
+  encode_decode(true)
+  encode_only(false, 'f')
+  encode_only(false, '', { filterByList: [false] })
+  encode_decode(false)
 
-  compare(true)
-  compare(false)
-  compare([true, false])
+  // number
+  encode_only(0, '0')
+  encode_only(0, '', { filterByList: [0] })
+  encode_decode(0)
+  encode_only(-0, '-0')
+  encode_only(-0, '', { filterByList: [0] })
+  encode_decode(-0)
+  encode_only(42.42, '42.42')
+  encode_only(-42.42, '-42.42')
+  encode_decode(42.42)
+  encode_only(NaN, '+NaN')
+  encode_only(NaN, '', { filterByList: [NaN] })
+  encode_decode(NaN)
+  encode_only(+Infinity, '+Infinity')
+  encode_only(+Infinity, '', { filterByList: [+Infinity] })
+  encode_decode(+Infinity)
+  encode_only(-Infinity, '-Infinity')
+  encode_only(-Infinity, '', { filterByList: [-Infinity] })
+  encode_decode(-Infinity)
 
-  // eslint-disable-next-line no-new-wrappers
-  compare(new String(42))
-  // eslint-disable-next-line no-new-wrappers
-  compare(new Number(42))
-  // eslint-disable-next-line no-new-wrappers
-  compare(new Boolean(1))
-  // eslint-disable-next-line no-new-wrappers
-  compare(new Boolean(0))
-  compare(new Array(42))
+  // bigint
+  encode_only(123456789n, 'i123456789')
+  encode_decode(123456789n)
+  encode_only(-123456789n, 'i-123456789')
+  encode_decode(-123456789n)
 
-  const array = [1,,, 4, 5,,, 8, 9]
-  array.qwe = 1212, array['0123'] = 11, array[1.23] = 13
-  compare(array)
-  // eslint-disable-next-line array-bracket-spacing
-  const array2 = [1,,, [{ 4: 4 }, 5,,, ], [, 8, 9]]
-  compare(array2)
+  // string
+  encode_only('Base', 'sBase')
+  encode_decode('Base')
+  const string = 'Строка·с·точками'
+  encode_only(string, 'sСтрока\\u00b7с\\u00b7точками')
+  encode_decode(string)
 
-  compare(new Date())
-  compare(new Date(343454343))
-
-  compare(/\s[^,]+/gi)
-
-  compare(new Set())
-  compare(new Map())
-  compare(new Set([1, 2, 3]))
-  compare(new Map([[1, 2], [3, 4]]))
+  // symbol
+  encode_only(Symbol('Any'), 'k1·sAny')
+  encode_only(Symbol('123'), 'k1·123')
+  encode_decode(Symbol.for('12345'))
 })
 
-test('Deep:', function() {
-  const numbers = [[[42, NaN, 2343n, 34,,, 2, -42, -333, 333, 424,, 24,, 424, 22, 4]]]
-  const texts = [,,, 'some', numbers, ,,, numbers,, '42']
-  const set = new Set([1, { numbers }, texts, new Int16Array(2)])
-  const date = new Date()
-  const regex = /\s[^,]+/gi
-  const array = [{ texts }, { regex }, ,,, regex, true, { numbers, date }]
-  const map = new Map([[{ array }, set], [{ set }, texts], [set, set]])
-  const object = { array, texts, set, map, regex, date, numbers }
-  set.add(set)
-  array.push(object, array)
-  texts.texts = texts
-  object.object = object[0] = object
-  texts.numbers = numbers.object = set
+test('encode: standard objects', function () {
+  // Boolean
+  encode_only(new Boolean(true), 'T')
+  encode_decode(new Boolean(true))
+  encode_only(new Boolean(false), 'F')
+  encode_decode(new Boolean(false))
 
-  // it turned out to be a very strange object
-  const FINAL_OBJECT = [set, object, map, set, object, array]
-  compare(FINAL_OBJECT)
+  // Number
+  encode_only(new Number(0), 'N1·0')
+  encode_decode(new Number(0))
+  encode_only(new Number(-0), 'N1·-0')
+  encode_decode(new Number(-0))
+  encode_only(new Number(42.42), 'N1·42.42')
+  encode_only(new Number(-42.42), 'N1·-42.42')
+  encode_only(new Number(NaN), 'N1·+NaN')
+  encode_decode(new Number(NaN))
+  encode_only(new Number(+Infinity), 'N1·+Infinity')
+  encode_only(new Number(-Infinity), 'N1·-Infinity')
 
-  // let's create a string from it
-  const packedString = cyclepack.pack(FINAL_OBJECT)
-  console.log(packedString)
+  // String
+  encode_only(new String('Base'), 'W1·sBase')
+  encode_only(new String('-123'), 'W1·-123')
+  encode_decode(new String('-12345'))
 
-  const packedStringStringify = cyclepack.pack(FINAL_OBJECT, null, true)
-  console.log(packedStringStringify)
+  // RegExp
+  let regexp = /\s*[^'"`·[\]]/
+  encode_only(regexp, 'R1·s\\\\s*[^\'\\"`\\u00b7[\\\\]]')
+  encode_decode(regexp)
+  regexp = /\s*[^'"`·[\]]/gi
+  encode_only(regexp, 'R1_2·s\\\\s*[^\'\\"`\\u00b7[\\\\]]·sgi')
+  encode_decode(regexp)
 
-  // let's restore our object
-  const unpackedObject = cyclepack.unpack(packedString)
-
-  // let's restore our object
-  expect(unpackedObject).toStrictEqual(FINAL_OBJECT) // there will be true
+  // Date
+  encode_only(new Date(NaN), 'D')
+  const date = new Date('2025-08-17T15:58:25.929Z')
+  encode_only(date, 'D1·s2025-08-17T15:58:25.929Z')
+  encode_decode(date)
 })
 
-test('ArrayBuffers and TypedArrays:', function() {
-  const ab = new ArrayBuffer(8)
-  // todo: not work
-  // compare(ab)
-  compare(new Int8Array(ab))
-
-  const f32 = new Float64Array([1, 2.5, 3])
-  compare(f32)
-
-  const ab2 = f32.buffer
-  compare(ab2)
-
-  const dv = [ab2, new DataView(ab2), new DataView(ab)]
-  compare(dv)
-
-  const i8a = new Int8Array([1, 2.5, 3, 1, 2.5, 3, 7, 8])
-  compare(i8a)
-  compare(i8a.buffer)
-
-  const u8ca = new Uint8ClampedArray([1, 2.5, 3, 1, 2.5, 3, 7, 8])
-  compare(u8ca)
-  compare(u8ca.buffer)
-
-  const u8a = new Uint8Array([1, 2.5, 3, 1, 2.5, 3, 7, 8])
-  compare(u8a)
-  // todo: not work
-  // compare(u8a.buffer)
-  expect(thereandback(u8a.buffer)).toEqual(u8a.buffer)
-
-  const i16a = new Int16Array([1, 2.5, 3, 1, 2.5, 3, 7, 8])
-  compare(i16a)
-  compare(i16a.buffer)
-
-  const u16a = new Uint16Array([1, 2.5, 3, 1, 2.5, 3, 7, 8])
-  compare(u16a)
-  compare(u16a.buffer)
-
-  const i32a = new Int32Array([1, 2.5, 3, 1, 2.5, 3, 7, 8])
-  compare(i32a)
-  compare(i32a.buffer)
-
-  const u32a = new Int32Array([1, 2.5, 3, 1, 2.5, 3, 7, 8])
-  compare(u32a)
-  compare(u32a.buffer)
-
-  const f32a = new Float32Array([1, 2.5, 3, 1, 2.5, 3, 7, 8])
-  compare(f32a)
-  compare(f32a.buffer)
-
-  const bi64a = new BigInt64Array(2)
-  compare(bi64a)
-  compare(bi64a.buffer)
-
-  const bu64a = new BigUint64Array(2)
-  compare(bu64a)
-  compare(bu64a.buffer)
-})
-
-test('Functions:', function() {
-  function someFunc() {}
-  function someFunc2() {}
-
-  const stringWithoutProxy = pack(someFunc)
-  // console.log(stringWithoutProxy)
-  const unpackWithoutProxy = unpack(stringWithoutProxy)
-  // console.log(unpackWithoutProxy)
-  expect(unpackWithoutProxy).toStrictEqual('%someFunc%')
-
-  const packed = pack([someFunc, someFunc2], function(func) {
-    if (func === someFunc) return 'FN_UNIQUE_ID'
-    return null
+test('encode: array', function () {
+  // Array
+  let array
+  array = []
+  encode_only(array, 'A0')
+  encode_decode(array)
+  encode_only(array, '', { removeEmptyObjects: true })
+  encode_decode([array, 1], [, 1], { removeEmptyObjects: true })
+  array = [null, 1, void 0, 3, [], , 6, ,]
+  encode_decode(array)
+  encode_decode(array, [, 1, , 3, [], , 6, ,], {
+    filterByList: [null, void 0],
+  })
+  encode_decode(array, [null, 1, void 0, 3, , , 6, ,], {
+    removeEmptyObjects: true,
+  })
+  encode_decode(array, [, 1, , 3, , , 6, ,], {
+    filterByList: [null, void 0],
+    removeEmptyObjects: true,
+  })
+  encode_decode(array, [null, 1, void 0, 3, [], 6], {
+    removeArrayHoles: true,
+  })
+  encode_decode(array, [1, 3, 6], {
+    filterByList: [null, void 0],
+    removeEmptyObjects: true,
+    removeArrayHoles: true,
   })
 
-  const unpacked = unpack(packed, function(fname) {
-    if (fname === 'FN_UNIQUE_ID') return someFunc
-    return null
+  encode_decode(array, [null, , void 0, , [], , , ,], {
+    filterByFunction: (v) => typeof v !== 'number',
   })
-
-  // console.log(packed)
-  // console.log(unpacked)
-  expect(unpacked).toStrictEqual([someFunc, '%someFunc2%'])
+  encode_decode(array, [null, void 0, []], {
+    filterByFunction: (v) => typeof v !== 'number',
+    removeArrayHoles: true,
+  })
+  encode_decode(array, [[]], {
+    filterByList: [null, void 0],
+    filterByFunction: (v) => typeof v !== 'number',
+    removeArrayHoles: true,
+  })
+  encode_decode(array, [null, void 0], {
+    filterByFunction: (v) => typeof v !== 'number',
+    removeEmptyObjects: true,
+    removeArrayHoles: true,
+  })
 })
 
-// eslint-disable-next-line jest/no-commented-out-tests
-// test('Errors:', () => {
-//   expect([new Error('')]).toStrictEqual(new Error(''))
-// })
+test('encode: functions', function () {
+  function FuncName() {}
+
+  encode_only(FuncName, '')
+  encode_only(FuncName, '', { prepareFunctions: () => null })
+  encode_only(FuncName, '', { prepareFunctions: () => void 0 })
+
+  encode_decode(FuncName, [12], { prepareFunctions: () => [12] })
+  encode_decode(FuncName, [[], null], {
+    filterByList: [null],
+    removeEmptyObjects: true,
+    prepareFunctions: () => [[], null],
+  })
+})
+
+test('encode: keyed collections', function () {
+  const set = new Set()
+  const map = new Map()
+
+  encode_only(set, 'S')
+  set.add([])
+  encode_only(set, '', { filterByList: [set] })
+  encode_only(set, '', { removeEmptyObjects: true })
+  encode_only(set, '', { filterByFunction: (v) => !(v instanceof Set) })
+  encode_decode(set)
+
+  encode_only(map, 'M')
+  map.set(12, [])
+  encode_only(map, '', { filterByList: [map] })
+  encode_only(map, '', { removeEmptyObjects: true })
+  encode_only(map, '', { filterByFunction: (v) => !(v instanceof Map) })
+  encode_decode(map)
+})
+
+test('encode: typed arrays', function () {
+  encode_decode(new Int8Array(2))
+  encode_decode(new Int8Array([21, 31]))
+
+  encode_decode(new Uint8Array(2))
+  encode_decode(new Uint8Array([21, 31]))
+
+  encode_decode(new Uint8ClampedArray(2))
+  encode_decode(new Uint8ClampedArray([21, 31]))
+
+  encode_decode(new Int16Array(2))
+  encode_decode(new Int16Array([21, 31]))
+
+  encode_decode(new Uint16Array(2))
+  encode_decode(new Uint16Array([21, 31]))
+
+  encode_decode(new Int32Array(2))
+  encode_decode(new Int32Array([21, 31]))
+
+  encode_decode(new Uint32Array(2))
+  encode_decode(new Uint32Array([21, 31]))
+
+  encode_decode(new Float32Array(2))
+  encode_decode(new Float32Array([21, 31]))
+
+  encode_decode(new Float64Array(2))
+  encode_decode(new Float64Array([21, 31]))
+
+  encode_decode(new BigInt64Array(2))
+  encode_decode(new BigInt64Array([21n, 31n]))
+
+  encode_decode(new BigUint64Array(2))
+  encode_decode(new BigUint64Array([21n, 31n]))
+})
+
+test('encode: objects', function () {
+  encode_decode({})
+  encode_decode(Object.create(null))
+
+  const a = { a: 1 }
+  a._a = a
+  const b = Object.create(a)
+  b.b = 2
+  b._a = a
+  b._b = b
+  const c = Object.create(b)
+  c.c = 3
+  c._a = a
+  c._b = b
+  c._c = c
+
+  encode_decode(a)
+  encode_decode(b)
+  encode_decode(c)
+})
+
+test('encode: errors', function () {
+  let e = new Error('12')
+  encode_decode(e)
+
+  e = new Error('asd', { cause: 12 })
+  encode_decode(e)
+
+  e = new AggregateError([1, 2, 3], 'asd', { cause: 12 })
+  encode_decode(e)
+})

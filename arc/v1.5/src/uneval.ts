@@ -23,7 +23,10 @@ import { stringEncode, keyToNumMayBe } from './utils'
 
 import type { IEncodeOptions } from './encode'
 
-export default function uneval(variable: any, options?: IEncodeOptions) {
+export default function uneval(
+  variable: any,
+  options?: IEncodeOptions
+): string {
   const IS_NAN = {}
   const IS_NEG_ZERO = {}
 
@@ -41,9 +44,9 @@ export default function uneval(variable: any, options?: IEncodeOptions) {
   let classes: any
   let errors: any
   if (options) {
-    allowNulls = options.allowNulls
-    allowUndefineds = options.allowUndefineds
-    allowEmptyObjects = options.allowEmptyObjects
+    allowNulls = !options.removeNulls
+    allowUndefineds = !options.removeUndefineds
+    allowEmptyObjects = !options.removeEmptyObjects
     functions = options.functions
     classes = options.classes
     errors = options.errors
@@ -208,7 +211,7 @@ return _
                         v = parse(v)
                         if (check_2(k) || check_2(v)) {
                           this.b = 1
-                          this.a.push(k, v)
+                          // this.a.push(k, v)
                           listValues.push(`v${this.i}.set(${k},${v})`)
                         }
                       }

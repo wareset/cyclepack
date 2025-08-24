@@ -43,7 +43,7 @@ export type IDecodeOptions = {
 }
 
 export default function decode(
-  variable: string,
+  variable: string | null | undefined,
   options?: IDecodeOptions
 ) {
   const data = jsonParse(variable)

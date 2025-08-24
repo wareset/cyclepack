@@ -35,26 +35,6 @@
       "import": "./dist/index.mjs",
       "require": "./dist/index.js",
       "types": "./types/index.d.ts"
-    },
-    "./decode": {
-      "import": "./dist/decode/index.mjs",
-      "require": "./dist/decode/index.js",
-      "types": "./types/decode.d.ts"
-    },
-    "./encode": {
-      "import": "./dist/encode/index.mjs",
-      "require": "./dist/encode/index.js",
-      "types": "./types/encode.d.ts"
-    },
-    "./uneval": {
-      "import": "./dist/uneval/index.mjs",
-      "require": "./dist/uneval/index.js",
-      "types": "./types/uneval.d.ts"
-    },
-    "./utils": {
-      "import": "./dist/utils/index.mjs",
-      "require": "./dist/utils/index.js",
-      "types": "./types/utils.d.ts"
     }
   },
   "scripts": {

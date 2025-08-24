@@ -1,9 +1,9 @@
 import { stringEncode, arrayBufferToBase64, keyToNumMayBe } from './utils'
 
 export type IEncodeOptions = {
-  allowNulls?: boolean
-  allowUndefineds?: boolean
-  allowEmptyObjects?: boolean
+  removeNulls?: boolean
+  removeUndefineds?: boolean
+  removeEmptyObjects?: boolean
   functions?: null | ((fn: (...a: any) => any) => any)
   classes?: null | ((object: { [k: string]: any }) => any)
   errors?: null | ((object: Error) => any)
@@ -12,7 +12,7 @@ export type IEncodeOptions = {
 export default function encode(
   variable: any,
   options?: IEncodeOptions
-) {
+): string | null | undefined {
   const IS_NAN = {}
   const IS_NEG_ZERO = {}
 
@@ -29,9 +29,9 @@ export default function encode(
   let classes: any
   let errors: any
   if (options) {
-    allowNulls = options.allowNulls
-    allowUndefineds = options.allowUndefineds
-    allowEmptyObjects = options.allowEmptyObjects
+    allowNulls = !options.removeNulls
+    allowUndefineds = !options.removeUndefineds
+    allowEmptyObjects = !options.removeEmptyObjects
     functions = options.functions
     classes = options.classes
     errors = options.errors

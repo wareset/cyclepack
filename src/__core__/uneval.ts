@@ -1,0 +1,428 @@
+import type { IEncodeOrUnevalOptions } from './types'
+import { stringEncode } from './utils/string'
+import {
+  keyToNumMayBe,
+  getGlobalThis,
+  noopReturnTrue,
+  noopReturnFirst,
+  isObjectPrototype,
+  checkIsCircularError,
+} from './utils/others'
+
+// function setId(num: number): string {
+//   num++
+//   const s: string[] = []
+//   for (let fromCharCode = String.fromCharCode, t: number; num > 0; ) {
+//     s.push(fromCharCode(97 + (t = (num - 1) % 26)))
+//     num = ((num - t) / 26) | 0
+//   }
+//   return s.join('')
+// }
+
+// const pattern = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ$'
+// function setId(num: number): string {
+//   num++
+//   const s: string[] = []
+//   for (let l = pattern.length, t: number; num > 0; ) {
+//     s.push(pattern[(t = (num - 1) % l)])
+//     num = ((num - t) / l) | 0
+//   }
+//   return s.join('')
+// }
+
+const globalForErrors = `var G="object";G=typeof globalThis===G?globalThis:typeof global===G?global:typeof window===G?window:typeof self===G?self:Function("return this")()||{}`
+
+function checkParsedKey(v: string) {
+  return v !== 'void 0'
+}
+
+export default function uneval(
+  variable: any,
+  options?: IEncodeOrUnevalOptions
+): string {
+  options || (options = {})
+  const IS_NAN = {}
+  const IS_NEG_ZERO = {}
+
+  const listOrigin: any[] = []
+  const listResult: any[] = []
+  const listValues: any[] = []
+  const listClassesAndGlobal: any[] = []
+
+  const filterByList: any[] = options.filterByList
+    ? options.filterByList.slice()
+    : []
+  const filterByFunction = options.filterByFunction || noopReturnTrue
+
+  let allowAll = 0
+  const allowArrayHoles = !options.removeArrayHoles
+  const allowEmptyObjects = !options.removeEmptyObjects
+  const prepareFunctions = options.prepareFunctions
+  const prepareClasses = options.prepareClasses
+  const prepareErrors = options.prepareErrors
+
+  let globalIsAdded = 0
+  let CLASSES: any
+  function createClass(type: string, short: string) {
+    if (!CLASSES) {
+      CLASSES = {}
+      listClassesAndGlobal.push(
+        `var CyclepackClass = {}
+function c(f,v){Object.defineProperty(f.prototype,"_CyclepackClass",{value:v,enumerable:!1,configurable:!0,writable:!0})}
+function n(v){return new CyclepackClass[v]()}`
+      )
+    }
+    if (!(type in CLASSES)) {
+      const escType = (CLASSES[type] = `"${stringEncode(type)}"`)
+      const className = `CyclepackClass[${escType}]`
+      listClassesAndGlobal.push(`c(${className}=function(){},${escType})`)
+    }
+    return `n(${short})`
+  }
+
+  function getObjProps(o: any, key: string, ignoreArrayVoids?: boolean) {
+    let res = false
+    let idx = 0
+    let k: any, v: any
+    for (k in o) {
+      try {
+        v = o[k]
+      } catch (e) {
+        console.error(e)
+        continue
+      }
+      if (checkParsedKey((v = parse(v)))) {
+        res = true
+        listValues.push(
+          `${key}[${
+            k !== (k = keyToNumMayBe(k))
+              ? ignoreArrayVoids && k === k >>> 0
+                ? idx++
+                : k
+              : parse(k, true)
+          }]=${v}`
+        )
+      }
+    }
+    return res
+  }
+
+  function getObjPropsWithProto(o: any, key: string) {
+    let res = false
+    let i = 0
+    let k: any, v: any
+    for (let a = Object.keys(o); i < a.length; i++) {
+      try {
+        v = o[(k = a[i])]
+      } catch (e) {
+        console.error(e)
+        continue
+      }
+      if (checkParsedKey((v = parse(v)))) {
+        res = true
+        listValues.push(
+          `${key}[${k !== (k = keyToNumMayBe(k)) ? k : parse(k, true)}]=${v}`
+        )
+      }
+    }
+    return res
+  }
+
+  const global = getGlobalThis()
+  const checkClasses = prepareClasses
+    ? function (v: any, type: any, funcName: string) {
+        let n = v
+        if (type !== global[funcName].prototype) {
+          n = prepareClasses(v)
+          if (n === null) {
+            n = NaN
+          } else if (n === void 0) {
+            n = v
+          } else if (typeof n !== 'string') {
+            n = parse(n, true)
+          }
+        }
+        return n
+      }
+    : noopReturnFirst
+
+  function parse(v: any, setAllowAll?: true) {
+    setAllowAll && allowAll++
+    if (
+      allowAll ||
+      (!filterByList.includes(v) &&
+        (filterByFunction(v) || (filterByList.push(v), false)))
+    ) {
+      let n = v !== v ? IS_NAN : v === 0 && 1 / v < 0 ? IS_NEG_ZERO : v
+      let idx: number | string = listOrigin.indexOf(n)
+      if (idx < 0) {
+        idx = listOrigin.length
+        listOrigin[idx] = n
+        idx = 'v' + idx
+        // idx = setId(idx)
+
+        let type: any = typeof v
+        switch (type) {
+          case 'undefined':
+            n = 'void 0'
+            break
+          case 'boolean':
+            n = v ? '!0' : '!1'
+            break
+          case 'number':
+            n = n === IS_NEG_ZERO ? '-0' : `${v}`
+            break
+          case 'bigint':
+            n = `BigInt(${v})`
+            break
+          case 'string':
+            n = `"${stringEncode(v)}"`
+            break
+          case 'symbol':
+            n = parse(keyToNumMayBe(v.toString().slice(7, -1)), true)
+            n = `Symbol.for(${n})`
+            break
+          case 'function':
+            if (prepareFunctions && (n = prepareFunctions(v)) != null) {
+              if (typeof n !== 'string')
+                checkIsCircularError(n, v), (n = parse(n, true))
+            } else {
+              n = NaN
+            }
+            // n = functions ? functions(v) : void 0
+            // if (n === null) {
+            //   n = NaN
+            // } else if (n === void 0) {
+            //   n = parse(CYCLEPACK_FUNCTION_MARK) + '+' + parse('' + v.name)
+            // } else if (typeof n !== 'string') {
+            //   n = parse(n, true)
+            // }
+            break
+          default:
+            if (v === null) {
+              n = 'null'
+            } else {
+              type = Object.getPrototypeOf(v)
+
+              switch ((n = Object.prototype.toString.call(v).slice(8, -1))) {
+                case 'Boolean':
+                  if ((n = checkClasses(v, type, n)) === v) {
+                    n = `new Boolean(${+v})`
+                  }
+                  break
+                case 'Number':
+                  if ((n = checkClasses(v, type, n)) === v) {
+                    n = `new Number(${parse(+v, true)})`
+                  }
+                  break
+                case 'String':
+                  if ((n = checkClasses(v, type, n)) === v) {
+                    n = `new String(${parse(keyToNumMayBe('' + v), true)})`
+                  }
+                  break
+
+                case 'RegExp':
+                  if ((n = checkClasses(v, type, n)) === v) {
+                    n = '' + v
+                  }
+                  break
+                case 'Date':
+                  if ((n = checkClasses(v, type, n)) === v) {
+                    n = isNaN(v.getDate())
+                      ? 'NaN'
+                      : parse(v.toISOString(), true)
+                    n = `new Date(${n})`
+                  }
+                  break
+
+                // Errors
+                // case 'AggregateError':
+                // case 'EvalError':
+                // case 'RangeError':
+                // case 'ReferenceError':
+                // case 'SyntaxError':
+                // case 'TypeError':
+                // case 'URIError':
+                case 'Error':
+                  n = prepareErrors && prepareErrors(v)
+                  if (n === null) {
+                    n = NaN
+                  } else if (n === void 0) {
+                    allowAll++
+                    globalIsAdded ||
+                      (globalIsAdded =
+                        listClassesAndGlobal.push(globalForErrors))
+                    n = [
+                      parse('' + v.constructor.name) +
+                        ',' +
+                        parse('' + v.message) +
+                        (v.stack ? `,${parse(v.stack)}` : ',""') +
+                        (v.errors ? `,${parse(v.errors)}` : ',null') +
+                        ('cause' in v ? `,{cause:${parse(v.cause)}}` : ''),
+                    ]
+                    n = `(function(f,m,s,e,c){
+var _,F=G[f]
+try{_= e?(new F([],m,c)):(new F(m,c))}catch{_=new Error(m,c);_._CyclepackError=f}
+e&&(_.errors=e);s&&(_.stack=s);return _
+})(${n[0]})`
+                    allowAll--
+                  } else if (typeof n !== 'string') {
+                    checkIsCircularError(n, v)
+                    n = parse(n, true)
+                  }
+                  break
+
+                // Indexed collections
+                case 'Array': {
+                  if ((n = checkClasses(v, type, n)) === v) {
+                    n = getObjProps(v, idx, !(allowAll || allowArrayHoles))
+                    n =
+                      n || allowAll || allowEmptyObjects
+                        ? allowAll || allowArrayHoles
+                          ? `Array(${v.length})`
+                          : '[]'
+                        : NaN
+                  }
+                  break
+                }
+
+                // Typed Arrays
+                case 'DataView':
+                case 'Int8Array':
+                case 'Uint8Array':
+                case 'Uint8ClampedArray':
+                case 'Int16Array':
+                case 'Uint16Array':
+                case 'Int32Array':
+                case 'Uint32Array':
+                case 'BigInt64Array':
+                case 'BigUint64Array':
+                case 'Float16Array':
+                case 'Float32Array':
+                case 'Float64Array':
+                  if ((n = checkClasses(v, type, (type = n))) === v) {
+                    n = `new ${type}(${parse(v.buffer, true)})`
+                  }
+                  break
+                // Structured data
+                case 'ArrayBuffer':
+                  if ((n = checkClasses(v, type, n)) === v) {
+                    n = `(new Uint8Array([${new Uint8Array(v)}])).buffer`
+                  }
+                  break
+
+                // Keyed collections
+                case 'Set':
+                  if ((n = checkClasses(v, type, n)) === v) {
+                    v.forEach(
+                      function (this: any, v: any) {
+                        if (checkParsedKey((v = parse(v)))) {
+                          this.b = 1
+                          listValues.push(`${this.i}.add(${v})`)
+                        }
+                      },
+                      (n = { b: 0, i: idx })
+                    )
+                    n = n.b || allowAll || allowEmptyObjects ? 'new Set()' : NaN
+                  }
+                  break
+                case 'Map':
+                  if ((n = checkClasses(v, type, n)) === v) {
+                    v.forEach(
+                      function (this: any, v: any, k: any) {
+                        if (checkParsedKey((v = parse(v)))) {
+                          this.b = 1
+                          listValues.push(
+                            `${this.i}.set(${parse(k, true)},${v})`
+                          )
+                        }
+                      },
+                      (n = { b: 0, i: idx })
+                    )
+                    n = n.b || allowAll || allowEmptyObjects ? 'new Map()' : NaN
+                  }
+                  break
+
+                default:
+                  if (!type || type === Object.prototype) {
+                    // Native Object
+                    n = getObjProps(v, idx)
+                    n =
+                      n || allowAll || allowEmptyObjects
+                        ? type
+                          ? `{}`
+                          : `Object.create(null)`
+                        : NaN
+                  } else {
+                    n = prepareClasses && prepareClasses(v)
+                    if (n === null) {
+                      n = NaN
+                    } else if (n === void 0) {
+                      if (isObjectPrototype(type)) {
+                        // Object.create({ ... })
+                        type = parse(type)
+                        checkParsedKey(type) || (type = null)
+                        n = getObjPropsWithProto(v, idx)
+                        n =
+                          n || type || allowAll || allowEmptyObjects
+                            ? `Object.create(${type})`
+                            : NaN
+                      } else {
+                        // Class
+                        type = '' + type.constructor.name
+                        n = getObjProps(v, idx)
+                        n =
+                          n || allowAll || allowEmptyObjects
+                            ? createClass(type, parse(type, true))
+                            : NaN
+                      }
+                    } else if (typeof n !== 'string') {
+                      checkIsCircularError(n, v)
+                      n = parse(n, true)
+                    }
+                  }
+              }
+            }
+        }
+
+        if (n === n) {
+          v = idx
+          listResult.push(`${v}=${n}`)
+        } else {
+          v = 'void 0'
+          filterByList.push(listOrigin.pop())
+          // listIgnore.push(listOrigin.splice(idx, 1))
+        }
+      } else {
+        v = 'v' + idx
+        // v = setId(idx)
+      }
+    } else {
+      v = 'void 0'
+    }
+    setAllowAll && allowAll--
+    return v
+  }
+
+  parse(variable)
+
+  let res: string
+  switch (listClassesAndGlobal.length + listResult.length + listValues.length) {
+    case 0:
+      res = 'void 0'
+      break
+    case 1:
+      res = listResult[0].slice(3)
+      break
+    default:
+      listClassesAndGlobal.push('var')
+      res = `(function() {
+${listClassesAndGlobal.join('\n')}
+${listResult.join(',\n')}
+${listValues.join('\n')}
+return v0
+})()`
+  }
+
+  return res
+}

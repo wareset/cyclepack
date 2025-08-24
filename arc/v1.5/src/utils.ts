@@ -46,14 +46,14 @@ export function stringDecode(s: string): string {
 }
 
 const _btoa: (s: string) => string =
-  typeof btoa !== 'undefined'
+  typeof btoa === 'function'
     ? btoa
     : function (s: string): string {
         return Buffer.from(s).toString('base64')
       }
 
 const _atob: (s: string) => string =
-  typeof atob !== 'undefined'
+  typeof atob === 'function'
     ? atob
     : function (s: string): string {
         return Buffer.from(s, 'base64').toString()
@@ -105,29 +105,30 @@ export function base64ToArrayBuffer(s: string) {
 
 let globalObject: any
 export function getGlobalObject() {
+  let obj = 'object'
   return (
     globalObject ||
     (globalObject =
-      (typeof globalThis === (globalObject = 'object') && globalThis) ||
-      (typeof window === globalObject && window) ||
-      (typeof global === globalObject && global) ||
-      (typeof self === globalObject && self) ||
+      (typeof globalThis === obj && globalThis) ||
+      (typeof window === obj && window) ||
+      (typeof global === obj && global) ||
+      (typeof self === obj && self) ||
       // (function (this: any) {
       //   return this
       // })() ||
-      Function('return this')())
+      Function('return this')()) ||
+    {}
   )
 }
 
 // const rx_json = /\{|\}|\[|\]|,|:|"(?:[^\\"]|\\.)*"|[^{}[\],:"\s]+/g
 const rx_json = /\{|\}|\[|\]|,|:|"|[^{}[\],:"\s]+/g
 const META: any = { b: '\b', t: '\t', n: '\n', f: '\f', r: '\r' }
-export function jsonParse(s: string) {
+export function jsonParse(s: string | null | undefined) {
   let env: (typeof cur)[] = []
   let cur: { t: '[' | '{'; o: any } = { t: '[', o: env }
 
-  const VAL_VOID = {}
-  let val: any = VAL_VOID
+  let val: any
   if (s) {
     rx_json.lastIndex = 0
     let key: any
@@ -137,9 +138,11 @@ export function jsonParse(s: string) {
 
     let m: RegExpExecArray | null, c: string
 
-    const save = function (key: any, val: any) {
-      val !== VAL_VOID && (cur.t === '[' ? cur.o.push(val) : (cur.o[key] = val))
-      return val
+    const save = function (v: any) {
+      if (v !== void 0)
+        cur.t === '[' ? cur.o.push(v) : (cur.o[key !== void 0 ? key : v] = v)
+      key = val = void 0
+      return v
     }
     for (; (m = rx_json.exec(s)); ) {
       switch ((c = m[0])) {
@@ -147,18 +150,20 @@ export function jsonParse(s: string) {
           key = val
           break
         case ',':
-          save(key, val), (val = VAL_VOID)
+          save(val)
           break
         case '[':
-          env.push((cur = { t: c, o: save(key, []) }))
+          env.push(cur)
+          cur = { t: c, o: save([]) }
           break
         case '{':
-          env.push((cur = { t: c, o: save(key, {}) }))
+          env.push(cur)
+          cur = { t: c, o: save({}) }
           break
         case ']':
         case '}':
-          save(key, val), (val = VAL_VOID)
-          env.pop(), (cur = env[env.length - 1])
+          save(val)
+          cur = env.pop()!
           break
         case '"': {
           const raw: string[] = []
@@ -190,7 +195,7 @@ export function jsonParse(s: string) {
     }
   }
 
-  return env.length ? cur : val !== VAL_VOID ? val : void 0
+  return env.length ? cur : val
 }
 
 export function keyToNumMayBe(s: string) {
