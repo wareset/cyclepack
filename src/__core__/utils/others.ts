@@ -12,24 +12,10 @@ export function keyToNumMayBe(s: string) {
 }
 
 let globalObject: any
-// export function getGlobalThis() {
-//   let obj = 'object'
-//   return (
-//     globalObject ||
-//     (globalObject =
-//       (typeof globalThis === obj && globalThis) ||
-//       (typeof global === obj && global) ||
-//       (typeof window === obj && window) ||
-//       (typeof self === obj && self) ||
-//       Function('return this')()) ||
-//     {}
-//   )
-// }
 export function getGlobalThis() {
-  const object = 'object'
-  return (
-    globalObject ||
-    (globalObject =
+  if (!globalObject) {
+    const object = 'object'
+    globalObject =
       typeof globalThis === object
         ? globalThis
         : typeof window === object
@@ -38,11 +24,12 @@ export function getGlobalThis() {
             ? global
             : typeof self === object
               ? self
-              : Function('return this')() || {})
-  )
+              : Function('return this')() || {}
+  }
+  return globalObject
 }
 
-export function isObjectPrototype(prototype: any) {
+export function isPrototypeLikeObject(prototype: any) {
   return (
     (typeof prototype.constructor !== 'function' ||
       prototype.constructor.prototype !== prototype) &&
@@ -55,7 +42,7 @@ export function isObjectPrototype(prototype: any) {
 //     return this[v]
 //   }, obj)
 // }
-// export function isObjectPrototype(prototype: any) {
+// export function isPrototypeLikeObject(prototype: any) {
 //   if (
 //     (typeof prototype.constructor !== 'function' ||
 //       prototype.constructor.prototype !== prototype) &&

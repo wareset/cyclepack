@@ -50,7 +50,7 @@ export default function decode(variable: string, options?: IDecodeOptions) {
       function setObjProps(o: any, a: any) {
         if (a) {
           a = a.split(',')
-          for (let v: any, i = 0; i < a.length; i++) {
+          for (let v: any, i = 0; i < a.length; ++i) {
             v = a[i].split(':')
             if (v.length === 1) o[i] = parse(v[0])
             else o[parse(v[0])] = parse(v[1])
@@ -199,16 +199,16 @@ export default function decode(variable: string, options?: IDecodeOptions) {
               temp[idx] = s = objectCreate(v[0] ? parse(v[0]) : null)
               setObjProps(s, v[1])
               break
-            // Class
-            case 'C':
-              s = parse(slice_1(v))
-              prepareClasses && (s = prepareClasses(s))
-              break
             // CyclepackClass
             case 'G':
               v = slice_1_and_split(v)
               temp[idx] = s = createClass(parse(v[0]))
               setObjProps(s, v[1])
+              break
+            // Class
+            case 'C':
+              s = parse(slice_1(v))
+              prepareClasses && (s = prepareClasses(s))
               break
 
             default:

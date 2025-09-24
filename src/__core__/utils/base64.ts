@@ -55,7 +55,7 @@
 //   }
 
 //   if (data[len - 2] === '=') res.length -= 2
-//   else if (data[len - 1] === '=') res.length--
+//   else if (data[len - 1] === '=') --res.length
 
 //   // return decodeURIComponent(res.join(''))
 //   return res.join('')
@@ -72,7 +72,7 @@ export function arrayBufferToBase64(v: ArrayBuffer) {
   const byteLength = dv.byteLength
   const arr: string[] = Array(byteLength)
   const fromCharCode = String.fromCharCode
-  for (let i = 0; i < byteLength; i++) arr[i] = fromCharCode(dv.getUint8(i))
+  for (let i = 0; i < byteLength; ++i) arr[i] = fromCharCode(dv.getUint8(i))
   return base64Encode(arr.join(''))
 }
 
@@ -87,6 +87,6 @@ export function base64ToArrayBuffer(s: string) {
   const length = s.length
   const ab = new ArrayBuffer(length)
   const dv = new DataView(ab)
-  for (let i = 0; i < length; i++) dv.setUint8(i, s.charCodeAt(i))
+  for (let i = 0; i < length; ++i) dv.setUint8(i, s.charCodeAt(i))
   return ab
 }

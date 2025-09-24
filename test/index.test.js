@@ -234,15 +234,18 @@ test('encode: objects', function () {
 
   const a = { a: 1 }
   a._a = a
+  a[Symbol.for('a')] = 1
   const b = Object.create(a)
   b.b = 2
   b._a = a
   b._b = b
+  b[Symbol.for('b')] = 2
   const c = Object.create(b)
   c.c = 3
   c._a = a
   c._b = b
   c._c = c
+  c[Symbol.for('c')] = 3
 
   encode_decode(a)
   encode_decode(b)

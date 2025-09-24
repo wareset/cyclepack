@@ -5,8 +5,8 @@ import {
   getGlobalThis,
   noopReturnTrue,
   noopReturnFirst,
-  isObjectPrototype,
   checkIsCircularError,
+  isPrototypeLikeObject,
 } from './utils/others'
 
 // function setId(num: number): string {
@@ -49,9 +49,7 @@ export default function uneval(
   const listValues: any[] = []
   const listClassesAndGlobal: any[] = []
 
-  const filterByList: any[] = options.filterByList
-    ? options.filterByList.slice()
-    : []
+  const filterByList: any[] = (options.filterByList || []).slice()
   const filterByFunction = options.filterByFunction || noopReturnTrue
 
   let allowAll = 0
@@ -80,6 +78,24 @@ function n(v){return new CyclepackClass[v]()}`
     return `n(${short})`
   }
 
+  function getSymbols(o: any, key: string): boolean {
+    let res = false
+    let k: any, v: any
+    for (let a = Object.getOwnPropertySymbols(o), i = 0; i < a.length; i++) {
+      try {
+        v = o[(k = a[i])]
+      } catch (e) {
+        // console.error(e)
+        continue
+      }
+      if (checkParsedKey((v = parse(v)))) {
+        res = true
+        listValues.push(`${key}[${parse(k, true)}]=${v}`)
+      }
+    }
+    return res
+  }
+
   function getObjProps(o: any, key: string, ignoreArrayVoids?: boolean) {
     let res = false
     let idx = 0
@@ -88,7 +104,7 @@ function n(v){return new CyclepackClass[v]()}`
       try {
         v = o[k]
       } catch (e) {
-        console.error(e)
+        // console.error(e)
         continue
       }
       if (checkParsedKey((v = parse(v)))) {
@@ -104,18 +120,18 @@ function n(v){return new CyclepackClass[v]()}`
         )
       }
     }
-    return res
+    return getSymbols(o, key) || res
   }
 
   function getObjPropsWithProto(o: any, key: string) {
     let res = false
     let i = 0
     let k: any, v: any
-    for (let a = Object.keys(o); i < a.length; i++) {
+    for (let a = Object.keys(o); i < a.length; ++i) {
       try {
         v = o[(k = a[i])]
       } catch (e) {
-        console.error(e)
+        // console.error(e)
         continue
       }
       if (checkParsedKey((v = parse(v)))) {
@@ -125,7 +141,7 @@ function n(v){return new CyclepackClass[v]()}`
         )
       }
     }
-    return res
+    return getSymbols(o, key) || res
   }
 
   const global = getGlobalThis()
@@ -147,7 +163,7 @@ function n(v){return new CyclepackClass[v]()}`
     : noopReturnFirst
 
   function parse(v: any, setAllowAll?: true) {
-    setAllowAll && allowAll++
+    setAllowAll && ++allowAll
     if (
       allowAll ||
       (!filterByList.includes(v) &&
@@ -189,14 +205,6 @@ function n(v){return new CyclepackClass[v]()}`
             } else {
               n = NaN
             }
-            // n = functions ? functions(v) : void 0
-            // if (n === null) {
-            //   n = NaN
-            // } else if (n === void 0) {
-            //   n = parse(CYCLEPACK_FUNCTION_MARK) + '+' + parse('' + v.name)
-            // } else if (typeof n !== 'string') {
-            //   n = parse(n, true)
-            // }
             break
           default:
             if (v === null) {
@@ -248,7 +256,7 @@ function n(v){return new CyclepackClass[v]()}`
                   if (n === null) {
                     n = NaN
                   } else if (n === void 0) {
-                    allowAll++
+                    ++allowAll
                     globalIsAdded ||
                       (globalIsAdded =
                         listClassesAndGlobal.push(globalForErrors))
@@ -265,7 +273,7 @@ var _,F=G[f]
 try{_= e?(new F([],m,c)):(new F(m,c))}catch{_=new Error(m,c);_._CyclepackError=f}
 e&&(_.errors=e);s&&(_.stack=s);return _
 })(${n[0]})`
-                    allowAll--
+                    --allowAll
                   } else if (typeof n !== 'string') {
                     checkIsCircularError(n, v)
                     n = parse(n, true)
@@ -353,29 +361,27 @@ e&&(_.errors=e);s&&(_.stack=s);return _
                           ? `{}`
                           : `Object.create(null)`
                         : NaN
+                  } else if (isPrototypeLikeObject(type)) {
+                    // Object.create({ ... })
+                    type = parse(type)
+                    checkParsedKey(type) || (type = null)
+                    n = getObjPropsWithProto(v, idx)
+                    n =
+                      n || type || allowAll || allowEmptyObjects
+                        ? `Object.create(${type})`
+                        : NaN
                   } else {
                     n = prepareClasses && prepareClasses(v)
                     if (n === null) {
                       n = NaN
                     } else if (n === void 0) {
-                      if (isObjectPrototype(type)) {
-                        // Object.create({ ... })
-                        type = parse(type)
-                        checkParsedKey(type) || (type = null)
-                        n = getObjPropsWithProto(v, idx)
-                        n =
-                          n || type || allowAll || allowEmptyObjects
-                            ? `Object.create(${type})`
-                            : NaN
-                      } else {
-                        // Class
-                        type = '' + type.constructor.name
-                        n = getObjProps(v, idx)
-                        n =
-                          n || allowAll || allowEmptyObjects
-                            ? createClass(type, parse(type, true))
-                            : NaN
-                      }
+                      // Class
+                      type = '' + type.constructor.name
+                      n = getObjProps(v, idx)
+                      n =
+                        n || allowAll || allowEmptyObjects
+                          ? createClass(type, parse(type, true))
+                          : NaN
                     } else if (typeof n !== 'string') {
                       checkIsCircularError(n, v)
                       n = parse(n, true)
@@ -400,7 +406,7 @@ e&&(_.errors=e);s&&(_.stack=s);return _
     } else {
       v = 'void 0'
     }
-    setAllowAll && allowAll--
+    setAllowAll && --allowAll
     return v
   }
 

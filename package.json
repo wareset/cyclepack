@@ -26,7 +26,6 @@
   "files": [
     "README.md",
     "dist/**/*",
-    "index.d.ts",
     "types/**/*"
   ],
   "exports": {

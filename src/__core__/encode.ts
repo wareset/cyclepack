@@ -6,8 +6,8 @@ import {
   getGlobalThis,
   noopReturnTrue,
   noopReturnFirst,
-  isObjectPrototype,
   checkIsCircularError,
+  isPrototypeLikeObject,
 } from './utils/others'
 
 function checkParsedKey(i: number) {
@@ -25,9 +25,7 @@ export default function encode(
   const listValues: any[] = []
   const listResult: any[] = []
 
-  const filterByList: any[] = options.filterByList
-    ? options.filterByList.slice()
-    : []
+  const filterByList: any[] = (options.filterByList || []).slice()
   const filterByFunction = options.filterByFunction || noopReturnTrue
 
   let allowAll = 0
@@ -37,8 +35,25 @@ export default function encode(
   const prepareClasses = options.prepareClasses
   const prepareErrors = options.prepareErrors
 
+  function getSymbols(o: any) {
+    const res: string[] = []
+    let k: any, v: any
+    for (let a = Object.getOwnPropertySymbols(o), i = 0; i < a.length; ++i) {
+      try {
+        v = o[(k = a[i])]
+      } catch (e) {
+        // console.error(e)
+        continue
+      }
+      if (checkParsedKey((v = parse(v)))) {
+        res.push(parse(k, true) + ':' + v)
+      }
+    }
+    return res.join(',')
+  }
+
   function getObjProps(o: any, ignoreArrayVoids?: boolean) {
-    const res: (string | number)[] = []
+    const res: string[] = []
     let idx = 0
     let k: any, v: any
     for (k in o) {
@@ -51,17 +66,18 @@ export default function encode(
       if (checkParsedKey((v = parse(v)))) {
         if (ignoreArrayVoids) idx = k >>> 0
         res.push((k = keyToNumMayBe(k)) === idx ? v : parse(k, true) + ':' + v)
-        idx++
+        ++idx
       }
     }
+    if ((v = getSymbols(o))) res.push(v)
     return res.length ? '_' + res.join(',') : ''
   }
 
   function getObjPropsWithProto(o: any) {
-    const res: (string | number)[] = []
+    const res: string[] = []
     let idx = 0
     let k: any, v: any
-    for (let a = Object.keys(o), i = 0; i < a.length; i++) {
+    for (let a = Object.keys(o), i = 0; i < a.length; ++i) {
       try {
         v = o[(k = a[i])]
       } catch (e) {
@@ -70,9 +86,10 @@ export default function encode(
       }
       if (checkParsedKey((v = parse(v)))) {
         res.push((k = keyToNumMayBe(k)) === idx ? v : parse(k, true) + ':' + v)
-        idx++
+        ++idx
       }
     }
+    if ((v = getSymbols(o))) res.push(v)
     return res.length ? '_' + res.join(',') : ''
   }
 
@@ -95,7 +112,7 @@ export default function encode(
     : noopReturnFirst
 
   function parse(v: any, setAllowAll?: true): number {
-    setAllowAll && allowAll++
+    setAllowAll && ++allowAll
     let idx: number
     if (
       allowAll ||
@@ -192,7 +209,7 @@ export default function encode(
                   if (n === null) {
                     n = NaN
                   } else if (n === void 0) {
-                    allowAll++
+                    ++allowAll
                     n =
                       'E' +
                       parse('' + v.constructor.name) +
@@ -203,7 +220,7 @@ export default function encode(
                       '_' +
                       (v.stack ? parse(v.stack) : '') +
                       (v.errors ? '_' + parse(v.errors) : '')
-                    allowAll--
+                    --allowAll
                   } else {
                     checkIsCircularError(n, v)
                     n = 'E' + parse(n)
@@ -286,24 +303,22 @@ export default function encode(
                       n || allowAll || allowEmptyObjects
                         ? 'O' + (type ? 1 : 0) + n
                         : NaN
+                  } else if (isPrototypeLikeObject(type)) {
+                    // Object.create({ ... })
+                    n = parse(type)
+                    n = (n < 0 ? '' : n) + getObjPropsWithProto(v)
+                    n = n || allowAll || allowEmptyObjects ? 'P' + n : NaN
                   } else {
                     n = prepareClasses && prepareClasses(v)
                     if (n === null) {
                       n = NaN
                     } else if (n === void 0) {
-                      if (isObjectPrototype(type)) {
-                        // Object.create({ ... })
-                        n = parse(type)
-                        n = (n < 0 ? '' : n) + getObjPropsWithProto(v)
-                        n = n || allowAll || allowEmptyObjects ? 'P' + n : NaN
-                      } else {
-                        // Class
-                        n = getObjProps(v)
-                        n =
-                          n || allowAll || allowEmptyObjects
-                            ? 'G' + parse('' + type.constructor.name, true) + n
-                            : NaN
-                      }
+                      // Class
+                      n = getObjProps(v)
+                      n =
+                        n || allowAll || allowEmptyObjects
+                          ? 'G' + parse('' + type.constructor.name, true) + n
+                          : NaN
                     } else {
                       checkIsCircularError(n, v)
                       n = 'C' + parse(n, true)
@@ -323,7 +338,7 @@ export default function encode(
     } else {
       idx = -1
     }
-    setAllowAll && allowAll--
+    setAllowAll && --allowAll
     return idx
   }
 
