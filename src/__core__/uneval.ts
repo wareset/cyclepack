@@ -53,7 +53,7 @@ export default function uneval(
   const filterByList: any[] = (options.filterByList || []).slice()
   const filterByFunction = options.filterByFunction || noopReturnTrue
 
-  let allowAll = 0
+  let allowAllDeep = 0
   const allowArrayHoles = !options.removeArrayHoles
   const allowEmptyObjects = !options.removeEmptyObjects
   const prepareFunctions = options.prepareFunctions
@@ -161,7 +161,7 @@ function n(v){return new CyclepackClass[v]()}`
           } else if (n === void 0) {
             n = v
           } else if (typeof n !== 'string') {
-            n = parse(n, 1)
+            n = parse(n, 1, 1)
           }
         }
         return n
@@ -170,8 +170,9 @@ function n(v){return new CyclepackClass[v]()}`
       ? noopReturnNaN
       : noopReturnFirst
 
-  function parse(v: any, setAllowAll?: 1) {
-    setAllowAll && ++allowAll
+  function parse(v: any, allowAll?: 1 | 0, setAllowAllDeep?: 1 | 0) {
+    setAllowAllDeep && ++allowAllDeep
+    allowAll || (allowAll = allowAllDeep as 1)
     if (
       allowAll ||
       (!filterByList.includes(v) &&
@@ -207,11 +208,12 @@ function n(v){return new CyclepackClass[v]()}`
             n = `Symbol.for(${n})`
             break
           case 'function':
-            if (prepareFunctions && (n = prepareFunctions(v)) != null) {
-              if (typeof n !== 'string')
-                checkIsCircularError(n, v), (n = parse(n, 1))
-            } else {
+            n = prepareFunctions && prepareFunctions(v)
+            if (n == null) {
               n = NaN
+            } else if (typeof n !== 'string') {
+              checkIsCircularError(n, v)
+              n = parse(n, 1, 1)
             }
             break
           default:
@@ -262,68 +264,41 @@ function n(v){return new CyclepackClass[v]()}`
                   if (n === null) {
                     n = NaN
                   } else if (n === void 0) {
-                    ++allowAll
                     globalIsAdded ||
                       (globalIsAdded =
                         listClassesAndGlobal.push(globalForErrors))
                     n = [
-                      parse('' + v.constructor.name) +
+                      parse('' + v.constructor.name, 1) +
                         ',' +
-                        parse('' + v.message) +
-                        (v.stack ? `,${parse(v.stack)}` : ',""') +
-                        (v.errors ? `,${parse(v.errors)}` : ',null') +
-                        ('cause' in v ? `,{cause:${parse(v.cause)}}` : ''),
+                        parse('' + v.message, 1) +
+                        (v.stack ? `,${parse(v.stack, 1)}` : ',""') +
+                        (v.errors ? `,${parse(v.errors, 1)}` : ',null') +
+                        ('cause' in v ? `,{cause:${parse(v.cause, 1)}}` : ''),
                     ]
                     n = `(function(f,m,s,e,c){
 var _,F=G[f]
 try{_= e?(new F([],m,c)):(new F(m,c))}catch{_=new Error(m,c);_._CyclepackError=f}
 e&&(_.errors=e);s&&(_.stack=s);return _
 })(${n[0]})`
-                    --allowAll
                   } else if (typeof n !== 'string') {
                     checkIsCircularError(n, v)
-                    n = parse(n, 1)
+                    n = parse(n, 1, 1)
                   }
                   break
 
                 // Indexed collections
                 case 'Array': {
                   if ((n = checkClasses(v, type, n)) === v) {
-                    n = getObjProps(v, idx, !(allowAll || allowArrayHoles))
+                    n = getObjProps(v, idx, !(allowAllDeep || allowArrayHoles))
                     n =
                       n || allowAll || allowEmptyObjects
-                        ? allowAll || allowArrayHoles
+                        ? allowAllDeep || allowArrayHoles
                           ? `Array(${v.length})`
                           : '[]'
                         : NaN
                   }
                   break
                 }
-
-                // Typed Arrays
-                case 'DataView':
-                case 'Int8Array':
-                case 'Uint8Array':
-                case 'Uint8ClampedArray':
-                case 'Int16Array':
-                case 'Uint16Array':
-                case 'Int32Array':
-                case 'Uint32Array':
-                case 'BigInt64Array':
-                case 'BigUint64Array':
-                case 'Float16Array':
-                case 'Float32Array':
-                case 'Float64Array':
-                  if ((n = checkClasses(v, type, (type = n))) === v) {
-                    n = `new ${type}(${parse(v.buffer, 1)})`
-                  }
-                  break
-                // Structured data
-                case 'ArrayBuffer':
-                  if ((n = checkClasses(v, type, n)) === v) {
-                    n = `(new Uint8Array([${new Uint8Array(v)}])).buffer`
-                  }
-                  break
 
                 // Keyed collections
                 case 'Set':
@@ -364,6 +339,31 @@ e&&(_.errors=e);s&&(_.stack=s);return _
                   }
                   break
 
+                // Typed Arrays
+                case 'DataView':
+                case 'Int8Array':
+                case 'Uint8Array':
+                case 'Uint8ClampedArray':
+                case 'Int16Array':
+                case 'Uint16Array':
+                case 'Int32Array':
+                case 'Uint32Array':
+                case 'BigInt64Array':
+                case 'BigUint64Array':
+                case 'Float16Array':
+                case 'Float32Array':
+                case 'Float64Array':
+                  if ((n = checkClasses(v, type, (type = n))) === v) {
+                    n = `new ${type}(${parse(v.buffer, 1)})`
+                  }
+                  break
+                // Structured data
+                case 'ArrayBuffer':
+                  if ((n = checkClasses(v, type, n)) === v) {
+                    n = `(new Uint8Array([${new Uint8Array(v)}])).buffer`
+                  }
+                  break
+
                 default:
                   if (!type || type === Object.prototype) {
                     // Native Object
@@ -397,7 +397,7 @@ e&&(_.errors=e);s&&(_.stack=s);return _
                           : NaN
                     } else if (typeof n !== 'string') {
                       checkIsCircularError(n, v)
-                      n = parse(n, 1)
+                      n = parse(n, 1, 1)
                     }
                   }
               }
@@ -419,7 +419,7 @@ e&&(_.errors=e);s&&(_.stack=s);return _
     } else {
       v = 'void 0'
     }
-    setAllowAll && --allowAll
+    setAllowAllDeep && --allowAllDeep
     return v
   }
 

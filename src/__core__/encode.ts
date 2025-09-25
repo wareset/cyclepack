@@ -29,7 +29,7 @@ export default function encode(
   const filterByList: any[] = (options.filterByList || []).slice()
   const filterByFunction = options.filterByFunction || noopReturnTrue
 
-  let allowAll = 0
+  let allowAllDeep = 0
   const allowArrayHoles = !options.removeArrayHoles
   const allowEmptyObjects = !options.removeEmptyObjects
   const prepareFunctions = options.prepareFunctions
@@ -105,7 +105,7 @@ export default function encode(
           } else if (n === void 0) {
             n = v
           } else {
-            n = 'C' + parse(n, 1)
+            n = 'C' + parse(n, 1, 1)
           }
         }
         return n
@@ -114,8 +114,9 @@ export default function encode(
       ? noopReturnNaN
       : noopReturnFirst
 
-  function parse(v: any, setAllowAll?: 1): number {
-    setAllowAll && ++allowAll
+  function parse(v: any, allowAll?: 1 | 0, setAllowAllDeep?: 1 | 0): number {
+    setAllowAllDeep && ++allowAllDeep
+    allowAll || (allowAll = allowAllDeep as 1)
     let idx: number
     if (
       allowAll ||
@@ -154,11 +155,12 @@ export default function encode(
             n = `k` + parse(keyToNumMayBe(v.toString().slice(7, -1)), 1)
             break
           case 'function':
-            if (prepareFunctions && (n = prepareFunctions(v)) != null) {
-              checkIsCircularError(n, v)
-              n = 'f' + parse(n, 1)
-            } else {
+            n = prepareFunctions && prepareFunctions(v)
+            if (n == null) {
               n = NaN
+            } else {
+              checkIsCircularError(n, v)
+              n = 'f' + parse(n, 1, 1)
             }
             break
           default:
@@ -212,31 +214,31 @@ export default function encode(
                   if (n === null) {
                     n = NaN
                   } else if (n === void 0) {
-                    ++allowAll
                     n =
                       'E' +
-                      parse('' + v.constructor.name) +
+                      parse('' + v.constructor.name, 1) +
                       '_' +
-                      parse('' + v.message) +
+                      parse('' + v.message, 1) +
                       '_' +
-                      ('cause' in v ? parse(v.cause) : '') +
+                      ('cause' in v ? parse(v.cause, 1) : '') +
                       '_' +
-                      (v.stack ? parse(v.stack) : '') +
-                      (v.errors ? '_' + parse(v.errors) : '')
-                    --allowAll
+                      (v.stack ? parse(v.stack, 1) : '') +
+                      (v.errors ? '_' + parse(v.errors, 1) : '')
                   } else {
                     checkIsCircularError(n, v)
-                    n = 'E' + parse(n)
+                    n = 'E' + parse(n, 1, 1)
                   }
                   break
 
                 // Indexed collections
                 case 'Array':
                   if ((n = checkClasses(v, type, n)) === v) {
-                    n = getObjProps(v, !(allowAll || allowArrayHoles))
+                    n = getObjProps(v, !(allowAllDeep || allowArrayHoles))
                     n =
                       n || allowAll || allowEmptyObjects
-                        ? 'A' + (allowAll || allowArrayHoles ? v.length : 0) + n
+                        ? 'A' +
+                          (allowAllDeep || allowArrayHoles ? v.length : 0) +
+                          n
                         : NaN
                   }
                   break
@@ -331,7 +333,7 @@ export default function encode(
                           : NaN
                     } else {
                       checkIsCircularError(n, v)
-                      n = 'C' + parse(n, 1)
+                      n = 'C' + parse(n, 1, 1)
                     }
                   }
               }
@@ -348,7 +350,7 @@ export default function encode(
     } else {
       idx = -1
     }
-    setAllowAll && --allowAll
+    setAllowAllDeep && --allowAllDeep
     return idx
   }
 
