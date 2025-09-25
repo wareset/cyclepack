@@ -4,6 +4,7 @@ import { arrayBufferToBase64 } from './utils/base64'
 import {
   keyToNumMayBe,
   getGlobalThis,
+  noopReturnNaN,
   noopReturnTrue,
   noopReturnFirst,
   checkIsCircularError,
@@ -109,7 +110,9 @@ export default function encode(
         }
         return n
       }
-    : noopReturnFirst
+    : prepareClasses === null
+      ? noopReturnNaN
+      : noopReturnFirst
 
   function parse(v: any, setAllowAll?: true): number {
     setAllowAll && ++allowAll
@@ -132,7 +135,7 @@ export default function encode(
             n = 'u'
             break
           case 'boolean':
-            n = v ? 't' : 'f'
+            n = 'b' + +v
             break
           case 'number':
             n = isFinite(v)
@@ -145,7 +148,7 @@ export default function encode(
             n = 'i' + v
             break
           case 'string':
-            n = 's' + stringEncode(v)
+            n = 't' + stringEncode(v)
             break
           case 'symbol':
             n = `k` + parse(keyToNumMayBe(v.toString().slice(7, -1)), true)
@@ -153,7 +156,7 @@ export default function encode(
           case 'function':
             if (prepareFunctions && (n = prepareFunctions(v)) != null) {
               checkIsCircularError(n, v)
-              n = 'm' + parse(n, true)
+              n = 'f' + parse(n, true)
             } else {
               n = NaN
             }
@@ -167,7 +170,7 @@ export default function encode(
               switch ((n = Object.prototype.toString.call(v).slice(8, -1))) {
                 case 'Boolean':
                   if ((n = checkClasses(v, type, n)) === v) {
-                    n = +v ? 'T' : 'F'
+                    n = 'B' + +v
                   }
                   break
                 case 'Number':
@@ -177,7 +180,7 @@ export default function encode(
                   break
                 case 'String':
                   if ((n = checkClasses(v, type, n)) === v) {
-                    n = 'W' + parse(keyToNumMayBe('' + v), true)
+                    n = 'T' + parse(keyToNumMayBe('' + v), true)
                   }
                   break
                 case 'RegExp':
@@ -238,6 +241,43 @@ export default function encode(
                   }
                   break
 
+                // Keyed collections
+                case 'Set':
+                  if ((n = checkClasses(v, type, n)) === v) {
+                    v.forEach(
+                      function (this: number[], v: any) {
+                        if (checkParsedKey((v = parse(v)))) {
+                          this.push(v)
+                        }
+                      },
+                      (n = [])
+                    )
+                    n = n.join(',')
+                    n = n || allowAll || allowEmptyObjects ? 'S' + n : NaN
+                  }
+                  break
+                case 'Map':
+                  if ((n = checkClasses(v, type, n)) === v) {
+                    v.forEach(
+                      function (this: number[], v: any, k: any) {
+                        const listValuesLength = listValues.length
+                        const listResultLength = listResult.length
+                        if (checkParsedKey((k = parse(k, true)))) {
+                          if (checkParsedKey((v = parse(v)))) {
+                            this.push(k, v)
+                          } else {
+                            listValues.length = listValuesLength
+                            listResult.length = listResultLength
+                          }
+                        }
+                      },
+                      (n = [])
+                    )
+                    n = n.join(',')
+                    n = n || allowAll || allowEmptyObjects ? 'M' + n : NaN
+                  }
+                  break
+
                 // Typed Arrays
                 case 'DataView':
                 case 'Int8Array':
@@ -261,36 +301,6 @@ export default function encode(
                 case 'ArrayBuffer':
                   if ((n = checkClasses(v, type, n)) === v) {
                     n = 'Y' + arrayBufferToBase64(v)
-                  }
-                  break
-
-                // Keyed collections
-                case 'Set':
-                  if ((n = checkClasses(v, type, n)) === v) {
-                    v.forEach(
-                      function (this: number[], v: any) {
-                        if (checkParsedKey((v = parse(v)))) {
-                          this.push(v)
-                        }
-                      },
-                      (n = [])
-                    )
-                    n = n.join(',')
-                    n = n || allowAll || allowEmptyObjects ? 'S' + n : NaN
-                  }
-                  break
-                case 'Map':
-                  if ((n = checkClasses(v, type, n)) === v) {
-                    v.forEach(
-                      function (this: number[], v: any, k: any) {
-                        if (checkParsedKey((v = parse(v)))) {
-                          this.push(parse(k, true), v)
-                        }
-                      },
-                      (n = [])
-                    )
-                    n = n.join(',')
-                    n = n || allowAll || allowEmptyObjects ? 'M' + n : NaN
                   }
                   break
 

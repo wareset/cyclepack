@@ -2,6 +2,10 @@ export function noopReturnFirst(v: any) {
   return v
 }
 
+export function noopReturnNaN() {
+  return NaN
+}
+
 export function noopReturnTrue() {
   return true
 }

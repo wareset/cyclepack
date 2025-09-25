@@ -3,6 +3,7 @@ import { stringEncode } from './utils/string'
 import {
   keyToNumMayBe,
   getGlobalThis,
+  noopReturnNaN,
   noopReturnTrue,
   noopReturnFirst,
   checkIsCircularError,
@@ -62,10 +63,13 @@ export default function uneval(
   let globalIsAdded = 0
   let CLASSES: any
   function createClass(type: string, short: string) {
+    globalIsAdded ||
+      (globalIsAdded = listClassesAndGlobal.push(globalForErrors))
+
     if (!CLASSES) {
       CLASSES = {}
       listClassesAndGlobal.push(
-        `var CyclepackClass = {}
+        `var CyclepackClass = G.CyclepackClass || (G.CyclepackClass = {})
 function c(f,v){Object.defineProperty(f.prototype,"_CyclepackClass",{value:v,enumerable:!1,configurable:!0,writable:!0})}
 function n(v){return new CyclepackClass[v]()}`
       )
@@ -73,7 +77,7 @@ function n(v){return new CyclepackClass[v]()}`
     if (!(type in CLASSES)) {
       const escType = (CLASSES[type] = `"${stringEncode(type)}"`)
       const className = `CyclepackClass[${escType}]`
-      listClassesAndGlobal.push(`c(${className}=function(){},${escType})`)
+      listClassesAndGlobal.push(`${className}||c(${className}=function(){},${escType})`)
     }
     return `n(${short})`
   }
@@ -160,7 +164,9 @@ function n(v){return new CyclepackClass[v]()}`
         }
         return n
       }
-    : noopReturnFirst
+    : prepareClasses === null
+      ? noopReturnNaN
+      : noopReturnFirst
 
   function parse(v: any, setAllowAll?: true) {
     setAllowAll && ++allowAll
@@ -338,11 +344,18 @@ e&&(_.errors=e);s&&(_.stack=s);return _
                   if ((n = checkClasses(v, type, n)) === v) {
                     v.forEach(
                       function (this: any, v: any, k: any) {
-                        if (checkParsedKey((v = parse(v)))) {
-                          this.b = 1
-                          listValues.push(
-                            `${this.i}.set(${parse(k, true)},${v})`
-                          )
+                        const listOriginLength = listOrigin.length
+                        const listValuesLength = listValues.length
+                        const listResultLength = listResult.length
+                        if (checkParsedKey((k = parse(k, true)))) {
+                          if (checkParsedKey((v = parse(v)))) {
+                            this.b = 1
+                            listValues.push(`${this.i}.set(${k},${v})`)
+                          } else {
+                            listOrigin.length = listOriginLength
+                            listValues.length = listValuesLength
+                            listResult.length = listResultLength
+                          }
                         }
                       },
                       (n = { b: 0, i: idx })

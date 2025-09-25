@@ -3,13 +3,17 @@ import { getGlobalThis } from './utils/others'
 import { base64ToArrayBuffer } from './utils/base64'
 import { stringEncode, stringDecode } from './utils/string'
 
-const CLASSES: any = {}
+let CLASSES: any
 function createClass(s: string) {
+  if (!CLASSES) {
+    getGlobalThis().CyclepackClass = CLASSES = {}
+  }
+
   if (!(s in CLASSES)) {
     let res: any
     try {
       res = Function(
-        `var CyclepackClass={};return CyclepackClass["${stringEncode(s)}"]=function(){}`
+        `return CyclepackClass["${stringEncode(s)}"]=function(){}`
       )()
     } catch {
       res = function CyclepackClass(this: any) {}
@@ -70,16 +74,19 @@ export default function decode(variable: string, options?: IDecodeOptions) {
               s = void 0
               break
             // boolean
-            case 't':
-            case 'f':
-              s = v === 't'
+            case 'b':
+              s = !!+v[1]
+              break
+            // number
+            default:
+              s = +v
               break
             // bigint
             case 'i':
               s = BigInt(slice_1(v))
               break
             // string
-            case 's':
+            case 't':
               s = stringDecode(slice_1(v))
               break
             // symbol
@@ -87,7 +94,7 @@ export default function decode(variable: string, options?: IDecodeOptions) {
               s = Symbol.for(parse(slice_1(v)))
               break
             // function
-            case 'm':
+            case 'f':
               s = parse(slice_1(v))
               prepareFunctions && (s = prepareFunctions(s))
               break
@@ -98,14 +105,13 @@ export default function decode(variable: string, options?: IDecodeOptions) {
               break
 
             // Boolean
-            case 'T':
-            case 'F':
-              s = new Boolean(v === 'T')
+            case 'B':
+              s = new Boolean(+v[1])
               break
             case 'N':
               s = new Number(parse(slice_1(v)))
               break
-            case 'W':
+            case 'T':
               s = new String(parse(slice_1(v)))
               break
             case 'R':
@@ -147,6 +153,23 @@ export default function decode(variable: string, options?: IDecodeOptions) {
               setObjProps(s, v[1])
               break
 
+            // Set
+            case 'S':
+              temp[idx] = s = new Set()
+              if ((v = slice_1(v))) {
+                for (let a = v.split(','), i = 0, l = a.length; i < l; )
+                  s.add(parse(a[i++]))
+              }
+              break
+            //Map
+            case 'M':
+              temp[idx] = s = new Map()
+              if ((v = slice_1(v))) {
+                for (let a = v.split(','), i = 0, l = a.length; i < l; )
+                  s.set(parse(a[i++]), parse(a[i++]))
+              }
+              break
+
             // Typed Arrays
             // case 'DataView':
             // case 'Int8Array':
@@ -168,23 +191,6 @@ export default function decode(variable: string, options?: IDecodeOptions) {
             // ArrayBuffer
             case 'Y':
               s = base64ToArrayBuffer(slice_1(v))
-              break
-
-            // Set
-            case 'S':
-              temp[idx] = s = new Set()
-              if ((v = slice_1(v))) {
-                for (let a = v.split(','), i = 0, l = a.length; i < l; )
-                  s.add(parse(a[i++]))
-              }
-              break
-            //Map
-            case 'M':
-              temp[idx] = s = new Map()
-              if ((v = slice_1(v))) {
-                for (let a = v.split(','), i = 0, l = a.length; i < l; )
-                  s.set(parse(a[i++]), parse(a[i++]))
-              }
               break
 
             // Native Object
@@ -209,10 +215,6 @@ export default function decode(variable: string, options?: IDecodeOptions) {
             case 'C':
               s = parse(slice_1(v))
               prepareClasses && (s = prepareClasses(s))
-              break
-
-            default:
-              s = +v
               break
           }
 
