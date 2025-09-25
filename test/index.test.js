@@ -171,6 +171,32 @@ return v0
         // expect(new Date(NaN)).toStrictEqual(new Date(NaN))
         notDecode: true,
       },
+      {
+        value: new URL('https://user:password@example.com/path?foo=bar#hash'),
+        encode: 'U1_2·tURL·thttps://user:password@example.com/path?foo=bar#hash',
+        uneval: `
+(function() {
+var
+v1="https://user:password@example.com/path?foo=bar#hash",
+v0=new URL(v1)
+
+return v0
+})()
+        `.trim(),
+      },
+      {
+        value: new URLSearchParams('foo=1&foo=2&baz=<+>'),
+        encode: 'U1_2·tURLSearchParams·tfoo=1&foo=2&baz=%3C+%3E',
+        uneval: `
+(function() {
+var
+v1="foo=1&foo=2&baz=%3C+%3E",
+v0=new URLSearchParams(v1)
+
+return v0
+})()
+        `.trim(),
+      },
     ],
 
     arrays: [

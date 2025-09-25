@@ -364,6 +364,13 @@ e&&(_.errors=e);s&&(_.stack=s);return _
                   }
                   break
 
+                case 'URL':
+                case 'URLSearchParams':
+                  if ((n = checkClasses(v, type, (type = n))) === v) {
+                    n = `new ${type}(${parse('' + v, 1)})`
+                  }
+                  break
+
                 default:
                   if (!type || type === Object.prototype) {
                     // Native Object

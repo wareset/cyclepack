@@ -306,6 +306,13 @@ export default function encode(
                   }
                   break
 
+                case 'URL':
+                case 'URLSearchParams':
+                  if ((n = checkClasses(v, type, (type = n))) === v) {
+                    n = 'U' + parse(type, 1) + '_' + parse('' + v, 1)
+                  }
+                  break
+
                 // case 'Object':
                 default:
                   if (!type || type === Object.prototype) {
