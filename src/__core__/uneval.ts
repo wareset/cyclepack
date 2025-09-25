@@ -37,6 +37,7 @@ function checkParsedKey(v: string) {
   return v !== 'void 0'
 }
 
+/*@__NO_SIDE_EFFECTS__*/
 export default function uneval(
   variable: any,
   options?: IEncodeOrUnevalOptions

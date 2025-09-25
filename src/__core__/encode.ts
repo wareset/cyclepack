@@ -15,6 +15,7 @@ function checkParsedKey(i: number) {
   return i > -1
 }
 
+/*@__NO_SIDE_EFFECTS__*/
 export default function encode(
   variable: any,
   options?: IEncodeOrUnevalOptions

@@ -36,6 +36,7 @@ function slice_1_and_split(s: string) {
   return s.slice(1).split('_')
 }
 
+/*@__NO_SIDE_EFFECTS__*/
 export default function decode(variable: string, options?: IDecodeOptions) {
   let result!: any
   if (variable && typeof variable === 'string') {
