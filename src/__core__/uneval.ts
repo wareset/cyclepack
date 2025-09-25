@@ -77,7 +77,9 @@ function n(v){return new CyclepackClass[v]()}`
     if (!(type in CLASSES)) {
       const escType = (CLASSES[type] = `"${stringEncode(type)}"`)
       const className = `CyclepackClass[${escType}]`
-      listClassesAndGlobal.push(`${className}||c(${className}=function(){},${escType})`)
+      listClassesAndGlobal.push(
+        `${className}||c(${className}=function(){},${escType})`
+      )
     }
     return `n(${short})`
   }
@@ -94,7 +96,7 @@ function n(v){return new CyclepackClass[v]()}`
       }
       if (checkParsedKey((v = parse(v)))) {
         res = true
-        listValues.push(`${key}[${parse(k, true)}]=${v}`)
+        listValues.push(`${key}[${parse(k, 1)}]=${v}`)
       }
     }
     return res
@@ -119,7 +121,7 @@ function n(v){return new CyclepackClass[v]()}`
               ? ignoreArrayVoids && k === k >>> 0
                 ? idx++
                 : k
-              : parse(k, true)
+              : parse(k, 1)
           }]=${v}`
         )
       }
@@ -141,7 +143,7 @@ function n(v){return new CyclepackClass[v]()}`
       if (checkParsedKey((v = parse(v)))) {
         res = true
         listValues.push(
-          `${key}[${k !== (k = keyToNumMayBe(k)) ? k : parse(k, true)}]=${v}`
+          `${key}[${k !== (k = keyToNumMayBe(k)) ? k : parse(k, 1)}]=${v}`
         )
       }
     }
@@ -159,7 +161,7 @@ function n(v){return new CyclepackClass[v]()}`
           } else if (n === void 0) {
             n = v
           } else if (typeof n !== 'string') {
-            n = parse(n, true)
+            n = parse(n, 1)
           }
         }
         return n
@@ -168,7 +170,7 @@ function n(v){return new CyclepackClass[v]()}`
       ? noopReturnNaN
       : noopReturnFirst
 
-  function parse(v: any, setAllowAll?: true) {
+  function parse(v: any, setAllowAll?: 1) {
     setAllowAll && ++allowAll
     if (
       allowAll ||
@@ -201,13 +203,13 @@ function n(v){return new CyclepackClass[v]()}`
             n = `"${stringEncode(v)}"`
             break
           case 'symbol':
-            n = parse(keyToNumMayBe(v.toString().slice(7, -1)), true)
+            n = parse(keyToNumMayBe(v.toString().slice(7, -1)), 1)
             n = `Symbol.for(${n})`
             break
           case 'function':
             if (prepareFunctions && (n = prepareFunctions(v)) != null) {
               if (typeof n !== 'string')
-                checkIsCircularError(n, v), (n = parse(n, true))
+                checkIsCircularError(n, v), (n = parse(n, 1))
             } else {
               n = NaN
             }
@@ -226,12 +228,12 @@ function n(v){return new CyclepackClass[v]()}`
                   break
                 case 'Number':
                   if ((n = checkClasses(v, type, n)) === v) {
-                    n = `new Number(${parse(+v, true)})`
+                    n = `new Number(${parse(+v, 1)})`
                   }
                   break
                 case 'String':
                   if ((n = checkClasses(v, type, n)) === v) {
-                    n = `new String(${parse(keyToNumMayBe('' + v), true)})`
+                    n = `new String(${parse(keyToNumMayBe('' + v), 1)})`
                   }
                   break
 
@@ -242,9 +244,7 @@ function n(v){return new CyclepackClass[v]()}`
                   break
                 case 'Date':
                   if ((n = checkClasses(v, type, n)) === v) {
-                    n = isNaN(v.getDate())
-                      ? 'NaN'
-                      : parse(v.toISOString(), true)
+                    n = isNaN(v.getDate()) ? 'NaN' : parse(v.toISOString(), 1)
                     n = `new Date(${n})`
                   }
                   break
@@ -282,7 +282,7 @@ e&&(_.errors=e);s&&(_.stack=s);return _
                     --allowAll
                   } else if (typeof n !== 'string') {
                     checkIsCircularError(n, v)
-                    n = parse(n, true)
+                    n = parse(n, 1)
                   }
                   break
 
@@ -315,7 +315,7 @@ e&&(_.errors=e);s&&(_.stack=s);return _
                 case 'Float32Array':
                 case 'Float64Array':
                   if ((n = checkClasses(v, type, (type = n))) === v) {
-                    n = `new ${type}(${parse(v.buffer, true)})`
+                    n = `new ${type}(${parse(v.buffer, 1)})`
                   }
                   break
                 // Structured data
@@ -347,7 +347,7 @@ e&&(_.errors=e);s&&(_.stack=s);return _
                         const listOriginLength = listOrigin.length
                         const listValuesLength = listValues.length
                         const listResultLength = listResult.length
-                        if (checkParsedKey((k = parse(k, true)))) {
+                        if (checkParsedKey((k = parse(k, 1)))) {
                           if (checkParsedKey((v = parse(v)))) {
                             this.b = 1
                             listValues.push(`${this.i}.set(${k},${v})`)
@@ -393,11 +393,11 @@ e&&(_.errors=e);s&&(_.stack=s);return _
                       n = getObjProps(v, idx)
                       n =
                         n || allowAll || allowEmptyObjects
-                          ? createClass(type, parse(type, true))
+                          ? createClass(type, parse(type, 1))
                           : NaN
                     } else if (typeof n !== 'string') {
                       checkIsCircularError(n, v)
-                      n = parse(n, true)
+                      n = parse(n, 1)
                     }
                   }
               }

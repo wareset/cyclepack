@@ -47,7 +47,7 @@ export default function encode(
         continue
       }
       if (checkParsedKey((v = parse(v)))) {
-        res.push(parse(k, true) + ':' + v)
+        res.push(parse(k, 1) + ':' + v)
       }
     }
     return res.join(',')
@@ -66,7 +66,7 @@ export default function encode(
       }
       if (checkParsedKey((v = parse(v)))) {
         if (ignoreArrayVoids) idx = k >>> 0
-        res.push((k = keyToNumMayBe(k)) === idx ? v : parse(k, true) + ':' + v)
+        res.push((k = keyToNumMayBe(k)) === idx ? v : parse(k, 1) + ':' + v)
         ++idx
       }
     }
@@ -86,7 +86,7 @@ export default function encode(
         continue
       }
       if (checkParsedKey((v = parse(v)))) {
-        res.push((k = keyToNumMayBe(k)) === idx ? v : parse(k, true) + ':' + v)
+        res.push((k = keyToNumMayBe(k)) === idx ? v : parse(k, 1) + ':' + v)
         ++idx
       }
     }
@@ -105,7 +105,7 @@ export default function encode(
           } else if (n === void 0) {
             n = v
           } else {
-            n = 'C' + parse(n, true)
+            n = 'C' + parse(n, 1)
           }
         }
         return n
@@ -114,7 +114,7 @@ export default function encode(
       ? noopReturnNaN
       : noopReturnFirst
 
-  function parse(v: any, setAllowAll?: true): number {
+  function parse(v: any, setAllowAll?: 1): number {
     setAllowAll && ++allowAll
     let idx: number
     if (
@@ -151,12 +151,12 @@ export default function encode(
             n = 't' + stringEncode(v)
             break
           case 'symbol':
-            n = `k` + parse(keyToNumMayBe(v.toString().slice(7, -1)), true)
+            n = `k` + parse(keyToNumMayBe(v.toString().slice(7, -1)), 1)
             break
           case 'function':
             if (prepareFunctions && (n = prepareFunctions(v)) != null) {
               checkIsCircularError(n, v)
-              n = 'f' + parse(n, true)
+              n = 'f' + parse(n, 1)
             } else {
               n = NaN
             }
@@ -175,27 +175,27 @@ export default function encode(
                   break
                 case 'Number':
                   if ((n = checkClasses(v, type, n)) === v) {
-                    n = 'N' + parse(+v, true)
+                    n = 'N' + parse(+v, 1)
                   }
                   break
                 case 'String':
                   if ((n = checkClasses(v, type, n)) === v) {
-                    n = 'T' + parse(keyToNumMayBe('' + v), true)
+                    n = 'T' + parse(keyToNumMayBe('' + v), 1)
                   }
                   break
                 case 'RegExp':
                   if ((n = checkClasses(v, type, n)) === v) {
                     n =
                       'R' +
-                      parse('' + v.source, true) +
-                      (v.flags ? '_' + parse('' + v.flags, true) : '')
+                      parse('' + v.source, 1) +
+                      (v.flags ? '_' + parse('' + v.flags, 1) : '')
                   }
                   break
                 case 'Date':
                   if ((n = checkClasses(v, type, n)) === v) {
                     n = isNaN(v.getDate())
                       ? 'D'
-                      : 'D' + parse(v.toISOString(), true)
+                      : 'D' + parse(v.toISOString(), 1)
                   }
                   break
 
@@ -262,7 +262,7 @@ export default function encode(
                       function (this: number[], v: any, k: any) {
                         const listValuesLength = listValues.length
                         const listResultLength = listResult.length
-                        if (checkParsedKey((k = parse(k, true)))) {
+                        if (checkParsedKey((k = parse(k, 1)))) {
                           if (checkParsedKey((v = parse(v)))) {
                             this.push(k, v)
                           } else {
@@ -293,7 +293,7 @@ export default function encode(
                 case 'Float32Array':
                 case 'Float64Array':
                   if ((n = checkClasses(v, type, (type = n))) === v) {
-                    n = 'U' + parse(type, true) + '_' + parse(v.buffer, true)
+                    n = 'U' + parse(type, 1) + '_' + parse(v.buffer, 1)
                   }
                   break
 
@@ -327,11 +327,11 @@ export default function encode(
                       n = getObjProps(v)
                       n =
                         n || allowAll || allowEmptyObjects
-                          ? 'G' + parse('' + type.constructor.name, true) + n
+                          ? 'G' + parse('' + type.constructor.name, 1) + n
                           : NaN
                     } else {
                       checkIsCircularError(n, v)
-                      n = 'C' + parse(n, true)
+                      n = 'C' + parse(n, 1)
                     }
                   }
               }
