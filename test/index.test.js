@@ -987,7 +987,7 @@ v0=(function(f,m,s,e,c){
 var _,F=G[f]
 try{_= e?(new F([],m,c)):(new F(m,c))}catch{_=new Error(m,c);_._CyclepackError=f}
 e&&(_.errors=e);s&&(_.stack=s);return _
-})(v1,v2,v3,null)
+})(v1,v2,v3,0,{})
 
 return v0
 })()
@@ -1014,7 +1014,7 @@ v0=(function(f,m,s,e,c){
 var _,F=G[f]
 try{_= e?(new F([],m,c)):(new F(m,c))}catch{_=new Error(m,c);_._CyclepackError=f}
 e&&(_.errors=e);s&&(_.stack=s);return _
-})(v1,v2,v3,null,{cause:v4})
+})(v1,v2,v3,0,{cause:v4})
 
 return v0
 })()
@@ -1043,7 +1043,7 @@ v0=(function(f,m,s,e,c){
 var _,F=G[f]
 try{_= e?(new F([],m,c)):(new F(m,c))}catch{_=new Error(m,c);_._CyclepackError=f}
 e&&(_.errors=e);s&&(_.stack=s);return _
-})(v1,v2,v3,v4)
+})(v1,v2,v3,v4,{})
 v4[0]=v5
 v4[1]=v6
 return v0
@@ -1070,7 +1070,7 @@ v0=(function(f,m,s,e,c){
 var _,F=G[f]
 try{_= e?(new F([],m,c)):(new F(m,c))}catch{_=new Error(m,c);_._CyclepackError=f}
 e&&(_.errors=e);s&&(_.stack=s);return _
-})(v1,v2,v3,null)
+})(v1,v2,v3,0,{})
 
 return v0
 })()
@@ -1097,7 +1097,7 @@ v0=(function(f,m,s,e,c){
 var _,F=G[f]
 try{_= e?(new F([],m,c)):(new F(m,c))}catch{_=new Error(m,c);_._CyclepackError=f}
 e&&(_.errors=e);s&&(_.stack=s);return _
-})(v1,v2,v3,null)
+})(v1,v2,v3,0,{})
 
 return v0
 })()

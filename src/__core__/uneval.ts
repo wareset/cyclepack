@@ -268,18 +268,17 @@ function n(v){return new CyclepackClass[v]()}`
                       (globalIsAdded =
                         listClassesAndGlobal.push(globalForErrors))
                     n = [
-                      parse('' + v.constructor.name, 1) +
-                        ',' +
-                        parse('' + v.message, 1) +
-                        (v.stack ? `,${parse(v.stack, 1)}` : ',""') +
-                        (v.errors ? `,${parse(v.errors, 1)}` : ',null') +
-                        ('cause' in v ? `,{cause:${parse(v.cause, 1)}}` : ''),
+                      parse('' + v.constructor.name, 1),
+                      parse('' + v.message, 1),
+                      v.stack ? parse(v.stack, 1) : 0,
+                      v.errors ? parse(v.errors, 1) : 0,
+                      'cause' in v ? `{cause:${parse(v.cause, 1)}}` : '{}',
                     ]
                     n = `(function(f,m,s,e,c){
 var _,F=G[f]
 try{_= e?(new F([],m,c)):(new F(m,c))}catch{_=new Error(m,c);_._CyclepackError=f}
 e&&(_.errors=e);s&&(_.stack=s);return _
-})(${n[0]})`
+})(${n})`
                   } else if (typeof n !== 'string') {
                     checkIsCircularError(n, v)
                     n = parse(n, 1, 1)
