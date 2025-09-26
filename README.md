@@ -141,7 +141,7 @@ function decode(data: string, options?: IDecodeOptions): any
 
 Массив `filterByList` позволяет исключить какие-либо значения из упаковки.
 
-Например:
+#### Например:
 
 ```js
 import * as cyclepack from 'cyclepack'
@@ -169,7 +169,7 @@ const obj = cyclepack.decode(str)
 // Результат:
 // Все 'null', '0' и 'NaN' были исключены,
 // но в 'Map' ключ 'NaN' остался, потому что
-// значение '42' без ключа существовать не может
+// значение '42' без него существовать не может
 obj ==
   {
     map: new Map([[NaN, 42]])
@@ -201,9 +201,9 @@ return v0
 
 ### Options: filterByFunction
 
-Функция `filterByFunction` работает как `filter` у массива - оставляет только те значения, при которых возвращает положительный результат.
+Функция `filterByFunction` оставляет только те значения, при которых возвращает положительный результат (как `filter` у массива).
 
-Например:
+#### Например:
 
 ```js
 import * as cyclepack from 'cyclepack'
@@ -225,6 +225,8 @@ const data = [
 ]
 
 const options = {
+  // Это осталось с прошлого примера чтобы показать,
+  // что все опции могут работать одновременно:
   filterByList: [null, 0, NaN],
   // Например, так мы исключим все строки:
   filterByFunction: (v) => typeof v !== 'string',
@@ -264,7 +266,7 @@ return v0
 
 По умолчанию `cyclepack` оставляет "дыры" в массивах. Опция `removeArrayHoles` позволяет убрать их.
 
-Пример:
+#### Пример:
 
 ```js
 import * as cyclepack from 'cyclepack'
@@ -279,6 +281,7 @@ const data = new Map([
 ])
 
 const options = {
+  // Это осталось с прошлого примера:
   filterByList: [null, 0, NaN],
   // Уберём "дыры" из массивов:
   removeArrayHoles: true,
@@ -327,7 +330,7 @@ return v0
 
 Опция `removeEmptyObjects` позволяет удалить все пустые `объекты`. А так же пустые `массивы`, `Map` и `Set`.
 
-Пример:
+#### Пример:
 
 ```js
 import * as cyclepack from 'cyclepack'
@@ -343,7 +346,9 @@ import * as cyclepack from 'cyclepack'
   }
 
   const options = {
+    // Это осталось с прошлого примера:
     filterByList: [0, NaN],
+    // Исключим все пустые объекты:
     removeEmptyObjects: true,
   }
 
@@ -369,7 +374,8 @@ return v0
   */
 }
 
-// `cyclepack` рекурсивно пропускал все пустые объекты.
+// Значения '0' и 'NaN' были исключены через 'filterByList' и
+// `cyclepack` рекурсивно исключал все условно пустые объекты.
 // В итоге в результат попал только главный объект со
 // свойством 'not_empty', которое равно '1'
 // а теперь удалим и его:
@@ -402,22 +408,22 @@ return v0
   */
 }
 
-// Объект 'data', оказался полностью пустой
-// и поэтому был убран. Это стоит иметь ввиду.
+// Объект 'data', оказался полностью пустой и
+// поэтому был полностью убран. Это стоит иметь ввиду.
 ```
 
 ### Options: prepareFunctions
 
 Функция `prepareFunctions` используется для подготовки функций к упаковке/распаковке (`encode`/`decode`) или передаче к исполнению (`uneval`).
 
-Пример, где `prepareFunctions` равна `void 0` или `null`:
+#### Пример, где `prepareFunctions` равна `void 0` или `null`:
 
 ```js
 import * as cyclepack from 'cyclepack'
 
 const options = {
   // Все эти опции полностью эквивалентны
-  // и любая функция будет отфильтрована
+  // и любая функция будет исключена:
   prepareFunctions: void 0,
   prepareFunctions: null,
   prepareFunctions: () => void 0,
@@ -434,7 +440,7 @@ const str = cyclepack.encode(data, options)
 
 const obj = cyclepack.decode(str)
 // Результат:
-// Все функции были отфильтрованы.
+// Все функции были исключены.
 // Значение '42' из 'Map' так же пропало, потому что
 // не может существовать без ключа, который был функцией.
 obj == { map: new Map([]) }
@@ -454,7 +460,7 @@ return v0
 */
 ```
 
-Используем `prepareFunctions` в `encode`/`decode`:
+#### Используем `prepareFunctions` в `encode`/`decode`:
 
 ```js
 import * as cyclepack from 'cyclepack'
@@ -468,7 +474,7 @@ const data = {
 }
 
 const optionsForEncode = {
-  // это здесь для примера:
+  // укажем для примера:
   filterByFunction: (v) => typeof v !== 'string',
   // Подготовим функцию к упаковке.
   // Используем самый простой способ, чтобы была понятна суть:
@@ -495,7 +501,9 @@ obj == { fn_1: 'MY_SUPER_FN' }
 никакие модификации ('filterByList', 'filterByFunction',
 'removeArrayHoles', 'removeEmptyObjects') к возвращающему значению
 не применяются.
+*/
 
+/*
 А теперь поймаем 'MY_SUPER_FN':
 */
 
@@ -507,11 +515,11 @@ const optionsForDecode = {
 
 const obj_2 = cyclepack.decode(str, optionsForDecode)
 // Результат:
-// Ключ 'fn_1' === my_super_fn, как и у объекта 'data'
+// Ключ 'fn_1' хранит 'my_super_fn', как и у объекта 'data'
 obj_2 == { fn_1: my_super_fn }
 ```
 
-Используем `prepareFunctions` в `uneval`:
+#### Используем `prepareFunctions` в `uneval`:
 
 ```js
 import * as cyclepack from 'cyclepack'
@@ -525,9 +533,10 @@ const data = {
 
 {
   const optionsForUneval = {
-    // это здесь для примера:
+    // укажем для примера:
     filterByFunction: (v) => typeof v !== 'string',
-    // Если возвращается не строка, то значение будет упаковано:
+    // Если возвращается не строка, то значение будет упаковано,
+    // но без каких-либо модификаций (типа 'filterByFunction'):
     prepareFunctions: (fn) => {
       if (fn === my_super_fn) return ['MY_SUPER_FN']
     },
@@ -556,26 +565,23 @@ return v0
     // Если возвращается строка, то она будет помещена
     // в финальный результат как есть, без изменений:
     prepareFunctions: (fn) => {
-      if (fn === my_super_fn) return '12345'
+      if (fn === my_super_fn) return 'my_super_fn'
     },
   }
   const forEval = cyclepack.uneval(data, optionsForUneval)
   // Результат:
-  eval(forEval) == { fn_1: 12345 }
+  // Строка 'my_super_fn' помещена в 'forEval' без изменений
+  // Нужно иметь это ввиду и помнить об XSS уязвимостях
+  eval(forEval) == { fn_1: my_super_fn }
   /*
 (function() {
 var
-v1=12345,
+v1=my_super_fn,
 v2="fn_1",
 v0={}
 v0[v2]=v1
 return v0
 })()
-  */
-
-  /*
-  Строка '12345' была помещена в 'forEval' без изменений.
-  Нужно иметь это ввиду и помнить об XSS уязвимостях.
   */
 }
 ```
@@ -586,7 +592,7 @@ return v0
 
 В `prepareClasses` возвращаемые значения `void 0` и `null` ведут себя по разному.
 
-Пример, где `prepareClasses` равна `null`:
+#### Пример, где `prepareClasses` равна `null`:
 
 ```js
 import * as cyclepack from 'cyclepack'
@@ -641,7 +647,7 @@ return v0
 */
 ```
 
-Используем `prepareClasses`:
+#### Используем `prepareClasses`:
 
 ```js
 import * as cyclepack from 'cyclepack'
@@ -658,7 +664,7 @@ const data = { vec: new Vector2D(21, 42) }
 // Пример опций для 'encode'/'decode':
 {
   const optionsForEncode = {
-    // это здесь для примера:
+    // укажем для примера:
     filterByFunction: (v) => typeof v !== 'string',
     // Подготовим класс к упаковке.
     // Используем самый простой способ, чтобы была понятна суть:
@@ -676,7 +682,9 @@ const data = { vec: new Vector2D(21, 42) }
   // значения 'prepareClasses' и не удаляет строку из массива
   obj_1 == { vec: ['Vector2D', 21, 42] }
 
-  // Восстановим объект класса Vector2D:
+  /*
+  Восстановим объект класса Vector2D:
+  */
 
   const optionsForDecode = {
     prepareClasses: (arr) => {
@@ -729,7 +737,7 @@ return v0
   const optionsForUneval_2 = {
     // Если возвращается строка, то она встраивается в
     // финальный результат как есть, без каки-либо изменений.
-    // Нужно иметь это ввиду и помнить об XSS уязвимостях.
+    // Нужно иметь это ввиду и помнить об XSS уязвимостях:
     prepareClasses: (obj) => {
       if (obj instanceof Vector2D) return `new Vector2D(${obj.x}, ${obj.y})`
     },
@@ -753,17 +761,10 @@ return v0
 }
 ```
 
-Пример, где `prepareClasses` равна `void 0`:
+#### Пример, где `prepareClasses` равна `void 0`:
 
 ```js
 import * as cyclepack from 'cyclepack'
-
-const options = {
-  // Эти опции полностью эквивалентны и любой
-  // нестандартный объект будет упакован автоматически:
-  prepareClasses: void 0,
-  prepareClasses: () => void 0,
-}
 
 class CustomArray extends Array {}
 
@@ -777,6 +778,13 @@ class Vector2D {
 const data = {
   arr: new CustomArray(42),
   vec: new Vector2D(21, 42),
+}
+
+const options = {
+  // Эти опции полностью эквивалентны и любой
+  // нестандартный объект будет упакован автоматически:
+  prepareClasses: void 0,
+  prepareClasses: () => void 0,
 }
 
 const str = data.encode(data, options)
