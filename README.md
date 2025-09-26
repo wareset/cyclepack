@@ -433,6 +433,7 @@ const options = {
   prepareFunctions: null,
   prepareFunctions: () => void 0,
   prepareFunctions: () => null,
+  prepareFunctions: (fn) => fn,
 }
 
 const data = {
@@ -790,6 +791,7 @@ const options = {
   // нестандартный объект будет упакован автоматически:
   prepareClasses: void 0,
   prepareClasses: () => void 0,
+  prepareClasses: (obj) => obj,
 }
 
 const str = data.encode(data, options)
@@ -920,6 +922,8 @@ const obj = cyclepack.decode(str)
 То есть `Array` и `Object` обрабатываются одинаково, а все остальные объекты - в соответствии со спецификой своей работы. Например:
 
 ```js
+import * as cyclepack from 'cyclepack'
+
 {
   const regexp = /[^]/gi
   regexp['some_key_1'] = 42
@@ -947,6 +951,80 @@ const obj = cyclepack.decode(str)
 }
 
 // и так далее, для всех остальных объектов
+```
+
+#### Специфика Map
+
+У `Map` ключом может быть всё что угодно, поэтому перед проверкой значения сначала идёт быстрая проверка ключа: является ли он функцией, объектом ошибки или нестандартным классовым объектом и, если является, то проверяется можно ли упаковывать его в принципе.
+
+После проверки и упаковки значения, начинается упаковка ключа и он не будет исключён опциями `filterByList`, `filterByFunction` и `removeEmptyObjects`, но может быть модифицирован ими, как и опцией `removeArrayHoles`.
+
+```js
+import * as cyclepack from 'cyclepack'
+
+class CustomArray extends Array {}
+
+const options = {
+  filterByList: [0, NaN],
+  filterByFunction: (v) => typeof v !== 'string',
+
+  removeArrayHoles: true,
+  removeEmptyObjects: true,
+
+  prepareClasses: null,
+}
+
+const data = new Map([
+  // Останется, так как значение '1' не может
+  // остаться без ключа
+  ['string', 1],
+  // Будет исключена по 'filterByFunction'
+  [2, 'string'],
+
+  // Останется, так как значение '3' не может
+  // остаться без ключа, но массив станет пустым
+  [[-0, 'string', NaN], 3],
+  // Будет исключена из-за 'prepareClasses: null'
+  [new CustomArray(42), 4],
+
+  // Останется, так как значение '5' не может
+  // остаться без ключа, но объект станет пустым
+  [{ q: [0, NaN] }, 5],
+  // Будет исключена по 'filterByList' и 'removeEmptyObjects'
+  [6, { q: [0, NaN] }],
+])
+
+const str = cyclepack.encode(data, options)
+// M2,1,4,3,6,5·1·tstring·3·A0·5·O1
+
+const obj = cyclepack.decode(str)
+// Результат:
+obj ==
+  new Map([
+    ['string', 1],
+    [[], 3],
+    [{}, 5],
+  ])
+
+const forEval = cyclepack.uneval(data)
+// Результат:
+eval(forEval) == obj
+/*
+(function() {
+var
+v1=1,
+v2="string",
+v3=3,
+v4=[],
+v5=5,
+v6={},
+v0=new Map()
+v0.set(v2,v1)
+v0.set(v4,v3)
+v0.set(v6,v5)
+return v0
+})()
+*/
 ```
 
 ## License
