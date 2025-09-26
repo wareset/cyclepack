@@ -1,5 +1,5 @@
 import type { IDecodeOptions } from './types'
-import { getGlobalThis } from './utils/others'
+import { __String__ as String, getGlobalThis } from './utils/others'
 import { base64ToArrayBuffer } from './utils/base64'
 import { stringEncode, stringDecode } from './utils/string'
 
@@ -37,20 +37,21 @@ function slice_1_and_split(s: string) {
 }
 
 /*@__NO_SIDE_EFFECTS__*/
-export default function decode(variable: string, options?: IDecodeOptions) {
+export default function decode(data: string, options?: IDecodeOptions) {
   let result!: any
-  if (variable && typeof variable === 'string') {
-    const data = variable.split('·')
+  if (data && typeof data === 'string') {
+    // код библиотечный, поэтому нечего переменной зря пропадать
+    data = data.split('·') as any
     if (data.length) {
-      const global = getGlobalThis()
-      const objectCreate = Object.create
-      const temp: any = objectCreate(null)
-      temp[-1] = void 0
-
       options || (options = {})
       const prepareFunctions = options.prepareFunctions
       const prepareClasses = options.prepareClasses
       const prepareErrors = options.prepareErrors
+
+      const global = getGlobalThis()
+      const objectCreate = Object.create
+      const temp: any = objectCreate(null)
+      temp[-1] = void 0
 
       function setObjProps(o: any, a: any) {
         if (a) {
@@ -109,16 +110,20 @@ export default function decode(variable: string, options?: IDecodeOptions) {
             case 'B':
               s = new Boolean(+v[1])
               break
+            // Number
             case 'N':
               s = new Number(parse(slice_1(v)))
               break
+            // String
             case 'T':
               s = new String(parse(slice_1(v)))
               break
+            // RegExp
             case 'R':
               v = slice_1_and_split(v)
               s = new RegExp(parse(v[0]), v[1] ? parse(v[1]) : void 0)
               break
+            // Date
             case 'D':
               v = slice_1(v)
               s = new Date(v ? parse(v) : NaN)
@@ -148,6 +153,7 @@ export default function decode(variable: string, options?: IDecodeOptions) {
               }
               break
 
+            // Array
             case 'A':
               v = slice_1_and_split(v)
               temp[idx] = s = Array(+v[0])
@@ -171,19 +177,22 @@ export default function decode(variable: string, options?: IDecodeOptions) {
               }
               break
 
-            // Typed Arrays
-            // case 'DataView':
-            // case 'Int8Array':
-            // case 'Uint8Array':
-            // case 'Uint8ClampedArray':
-            // case 'Int16Array':
-            // case 'Uint16Array':
-            // case 'Int32Array':
-            // case 'Uint32Array':
-            // case 'Float32Array':
-            // case 'Float64Array':
-            // case 'BigInt64Array':
-            // case 'BigUint64Array':
+            // URL
+            // URLSearchParams
+            // and
+            // Typed Arrays:
+            // DataView
+            // Int8Array
+            // Uint8Array
+            // Uint8ClampedArray
+            // Int16Array
+            // Uint16Array
+            // Int32Array
+            // Uint32Array
+            // Float32Array
+            // Float64Array
+            // BigInt64Array
+            // BigUint64Array
             case 'U':
               v = slice_1_and_split(v)
               s = new global[parse(v[0])](parse(v[1]))
@@ -212,7 +221,7 @@ export default function decode(variable: string, options?: IDecodeOptions) {
               temp[idx] = s = createClass(parse(v[0]))
               setObjProps(s, v[1])
               break
-            // Class
+            // User Class
             case 'C':
               s = parse(slice_1(v))
               prepareClasses && (s = prepareClasses(s))

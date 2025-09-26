@@ -1,6 +1,7 @@
 import type { IEncodeOrUnevalOptions } from './types'
 import { stringEncode } from './utils/string'
 import {
+  __String__ as String,
   keyToNumMayBe,
   getGlobalThis,
   noopReturnNaN,
@@ -38,10 +39,7 @@ function checkParsedKey(v: string) {
 }
 
 /*@__NO_SIDE_EFFECTS__*/
-export default function uneval(
-  variable: any,
-  options?: IEncodeOrUnevalOptions
-): string {
+export default function uneval(data: any, options?: IEncodeOrUnevalOptions) {
   options || (options = {})
   const IS_NAN = {}
   const IS_NEG_ZERO = {}
@@ -196,7 +194,7 @@ function n(v){return new CyclepackClass[v]()}`
             n = v ? '!0' : '!1'
             break
           case 'number':
-            n = n === IS_NEG_ZERO ? '-0' : `${v}`
+            n = n === IS_NEG_ZERO ? '-0' : String(v)
             break
           case 'bigint':
             n = `BigInt(${v})`
@@ -205,7 +203,7 @@ function n(v){return new CyclepackClass[v]()}`
             n = `"${stringEncode(v)}"`
             break
           case 'symbol':
-            n = parse(keyToNumMayBe(v.toString().slice(7, -1)), 1)
+            n = parse(keyToNumMayBe(String(v).slice(7, -1)), 1)
             n = `Symbol.for(${n})`
             break
           case 'function':
@@ -236,13 +234,13 @@ function n(v){return new CyclepackClass[v]()}`
                   break
                 case 'String':
                   if ((n = checkClasses(v, type, n)) === v) {
-                    n = `new String(${parse(keyToNumMayBe('' + v), 1)})`
+                    n = `new String(${parse(keyToNumMayBe(String(v)), 1)})`
                   }
                   break
 
                 case 'RegExp':
                   if ((n = checkClasses(v, type, n)) === v) {
-                    n = '' + v
+                    n = String(v)
                   }
                   break
                 case 'Date':
@@ -269,8 +267,8 @@ function n(v){return new CyclepackClass[v]()}`
                       (globalIsAdded =
                         listClassesAndGlobal.push(globalForErrors))
                     n = [
-                      parse('' + v.constructor.name, 1),
-                      parse('' + v.message, 1),
+                      parse(String(v.constructor.name), 1),
+                      parse(String(v.message), 1),
                       v.stack ? parse(v.stack, 1) : 0,
                       v.errors ? parse(v.errors, 1) : 0,
                       'cause' in v ? `{cause:${parse(v.cause, 1)}}` : '{}',
@@ -367,7 +365,7 @@ e&&(_.errors=e);s&&(_.stack=s);return _
                 case 'URL':
                 case 'URLSearchParams':
                   if ((n = checkClasses(v, type, (type = n))) === v) {
-                    n = `new ${type}(${parse('' + v, 1)})`
+                    n = `new ${type}(${parse(String(v), 1)})`
                   }
                   break
 
@@ -395,14 +393,15 @@ e&&(_.errors=e);s&&(_.stack=s);return _
                     if (n === null) {
                       n = NaN
                     } else if (n === void 0) {
-                      // Class
-                      type = '' + type.constructor.name
+                      // CyclepackClass
+                      type = String(type.constructor.name)
                       n = getObjProps(v, idx)
                       n =
                         n || allowAll || allowEmptyObjects
                           ? createClass(type, parse(type, 1))
                           : NaN
                     } else if (typeof n !== 'string') {
+                      // User Class
                       checkIsCircularError(n, v)
                       n = parse(n, 1, 1)
                     }
@@ -430,7 +429,7 @@ e&&(_.errors=e);s&&(_.stack=s);return _
     return v
   }
 
-  parse(variable)
+  parse(data)
 
   let res: string
   switch (listClassesAndGlobal.length + listResult.length + listValues.length) {

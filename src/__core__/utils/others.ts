@@ -1,3 +1,5 @@
+export const __String__ = String
+
 export function noopReturnFirst(v: any) {
   return v
 }
@@ -12,7 +14,7 @@ export function noopReturnTrue() {
 
 export function keyToNumMayBe(s: string) {
   const n = +s
-  return s !== '' + n ? s : n
+  return s !== __String__(n) ? s : n
 }
 
 let globalObject: any

@@ -10,8 +10,21 @@ test('Base: without options', function () {
       // primitives
       {
         value: void 0,
-        encode: 'u',
+        encode: '',
         uneval: 'void 0',
+      },
+      {
+        value: [void 0],
+        encode: 'A1_1·u',
+        uneval: `
+(function() {
+var
+v1=void 0,
+v0=Array(1)
+v0[0]=v1
+return v0
+})()
+        `.trim(),
       },
       {
         value: null,
@@ -173,7 +186,8 @@ return v0
       },
       {
         value: new URL('https://user:password@example.com/path?foo=bar#hash'),
-        encode: 'U1_2·tURL·thttps://user:password@example.com/path?foo=bar#hash',
+        encode:
+          'U1_2·tURL·thttps://user:password@example.com/path?foo=bar#hash',
         uneval: `
 (function() {
 var

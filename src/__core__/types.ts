@@ -1,6 +1,6 @@
 export interface IEncodeOrUnevalOptions {
   filterByList?: any[]
-  filterByFunction?: (v: any) => unknown
+  filterByFunction?: (v: any) => boolean
   removeArrayHoles?: boolean
   removeEmptyObjects?: boolean
   prepareFunctions?: null | ((fn: (...a: any[]) => any) => any)

@@ -2,6 +2,7 @@ import type { IEncodeOrUnevalOptions } from './types'
 import { stringEncode } from './utils/string'
 import { arrayBufferToBase64 } from './utils/base64'
 import {
+  __String__ as String,
   keyToNumMayBe,
   getGlobalThis,
   noopReturnNaN,
@@ -16,10 +17,7 @@ function checkParsedKey(i: number) {
 }
 
 /*@__NO_SIDE_EFFECTS__*/
-export default function encode(
-  variable: any,
-  options?: IEncodeOrUnevalOptions
-) {
+export default function encode(data: any, options?: IEncodeOrUnevalOptions) {
   options || (options = {})
   const IS_NAN = {}
   const IS_NEG_ZERO = {}
@@ -143,8 +141,10 @@ export default function encode(
             n = isFinite(v)
               ? n === IS_NEG_ZERO
                 ? '-0'
-                : '' + v
-              : (v < 0 ? '' : '+') + v
+                : String(v)
+              : v < 0
+                ? String(v)
+                : '+' + v
             break
           case 'bigint':
             n = 'i' + v
@@ -153,7 +153,7 @@ export default function encode(
             n = 't' + stringEncode(v)
             break
           case 'symbol':
-            n = `k` + parse(keyToNumMayBe(v.toString().slice(7, -1)), 1)
+            n = `k` + parse(keyToNumMayBe(String(v).slice(7, -1)), 1)
             break
           case 'function':
             n = prepareFunctions && prepareFunctions(v)
@@ -183,15 +183,15 @@ export default function encode(
                   break
                 case 'String':
                   if ((n = checkClasses(v, type, n)) === v) {
-                    n = 'T' + parse(keyToNumMayBe('' + v), 1)
+                    n = 'T' + parse(keyToNumMayBe(String(v)), 1)
                   }
                   break
                 case 'RegExp':
                   if ((n = checkClasses(v, type, n)) === v) {
                     n =
                       'R' +
-                      parse('' + v.source, 1) +
-                      (v.flags ? '_' + parse('' + v.flags, 1) : '')
+                      parse(String(v.source), 1) +
+                      (v.flags ? '_' + parse(String(v.flags), 1) : '')
                   }
                   break
                 case 'Date':
@@ -217,9 +217,9 @@ export default function encode(
                   } else if (n === void 0) {
                     n =
                       'E' +
-                      parse('' + v.constructor.name, 1) +
+                      parse(String(v.constructor.name), 1) +
                       '_' +
-                      parse('' + v.message, 1) +
+                      parse(String(v.message), 1) +
                       '_' +
                       ('cause' in v ? parse(v.cause, 1) : '') +
                       '_' +
@@ -310,7 +310,7 @@ export default function encode(
                 case 'URL':
                 case 'URLSearchParams':
                   if ((n = checkClasses(v, type, (type = n))) === v) {
-                    n = 'U' + parse(type, 1) + '_' + parse('' + v, 1)
+                    n = 'U' + parse(type, 1) + '_' + parse(String(v), 1)
                   }
                   break
 
@@ -333,13 +333,14 @@ export default function encode(
                     if (n === null) {
                       n = NaN
                     } else if (n === void 0) {
-                      // Class
+                      // CyclepackClass
                       n = getObjProps(v)
                       n =
                         n || allowAll || allowEmptyObjects
-                          ? 'G' + parse('' + type.constructor.name, 1) + n
+                          ? 'G' + parse(String(type.constructor.name), 1) + n
                           : NaN
                     } else {
+                      // User Class
                       checkIsCircularError(n, v)
                       n = 'C' + parse(n, 1, 1)
                     }
@@ -362,6 +363,6 @@ export default function encode(
     return idx
   }
 
-  parse(variable)
-  return listResult.join('·')
+  parse(data)
+  return (data = listResult.join('·')) === 'u' ? '' : data
 }
