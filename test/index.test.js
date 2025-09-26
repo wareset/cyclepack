@@ -1294,6 +1294,33 @@ return v0
         return Object.create(res)
       },
     },
+    {
+      value: {
+        object: { q: 1 },
+        map: new Map([[new CustomClass(), 999]]),
+        customClass: new CustomClass(),
+        customArray: new CustomArray(42),
+      },
+      prepareClasses: null,
+      encode: 'O1_4:1,6:5·O1_3:2·1·tq·tobject·M·tmap',
+      uneval: `
+(function() {
+var
+v2=1,
+v3="q",
+v1={},
+v4="object",
+v5=new Map(),
+v6="map",
+v0={}
+v1[v3]=v2
+v0[v4]=v1
+v0[v6]=v5
+return v0
+})()
+      `.trim(),
+      decode: { object: { q: 1 }, map: new Map([]) },
+    },
   ]
 
   for (const data of fixtures) {
