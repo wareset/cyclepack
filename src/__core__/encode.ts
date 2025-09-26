@@ -266,8 +266,8 @@ export default function encode(data: any, options?: EncodeOrUnevalOptions) {
                       function (this: number[], v: any, k: any) {
                         const listValuesLength = listValues.length
                         const listResultLength = listResult.length
-                        if (checkParsedKey((k = parse(k, 1)))) {
-                          if (checkParsedKey((v = parse(v)))) {
+                        if (checkParsedKey((v = parse(v)))) {
+                          if (checkParsedKey((k = parse(k, 1)))) {
                             this.push(k, v)
                           } else {
                             listValues.length = listValuesLength

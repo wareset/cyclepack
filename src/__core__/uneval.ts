@@ -319,8 +319,8 @@ e&&(_.errors=e);s&&(_.stack=s);return _
                         const listOriginLength = listOrigin.length
                         const listValuesLength = listValues.length
                         const listResultLength = listResult.length
-                        if (checkParsedKey((k = parse(k, 1)))) {
-                          if (checkParsedKey((v = parse(v)))) {
+                        if (checkParsedKey((v = parse(v)))) {
+                          if (checkParsedKey((k = parse(k, 1)))) {
                             this.b = 1
                             listValues.push(`${this.i}.set(${k},${v})`)
                           } else {

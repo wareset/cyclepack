@@ -295,17 +295,17 @@ return v0
           [11, 22],
           [33, 44],
         ]),
-        encode: 'M1,2,3,4·11·22·33·44',
+        encode: 'M2,1,4,3·22·11·44·33',
         uneval: `
 (function() {
 var
-v1=11,
-v2=22,
-v3=33,
-v4=44,
+v1=22,
+v2=11,
+v3=44,
+v4=33,
 v0=new Map()
-v0.set(v1,v2)
-v0.set(v3,v4)
+v0.set(v2,v1)
+v0.set(v4,v3)
 return v0
 })()
         `.trim(),
@@ -691,14 +691,14 @@ return v0
         ['a', 3],
         [4, 'b'],
       ]),
-      encode: 'M1,2·4·tb',
+      encode: 'M2,1·tb·4',
       uneval: `
 (function() {
 var
-v1=4,
-v2="b",
+v1="b",
+v2=4,
 v0=new Map()
-v0.set(v1,v2)
+v0.set(v2,v1)
 return v0
 })()
       `.trim(),
@@ -778,14 +778,14 @@ test('Options: removeEmptyObjects', function () {
     },
     {
       value: new Map([[{}, 1]]),
-      encode: 'M1,2·O1·1',
+      encode: 'M2,1·1·O1',
       uneval: `
 (function() {
 var
-v1={},
-v2=1,
+v1=1,
+v2={},
 v0=new Map()
-v0.set(v1,v2)
+v0.set(v2,v1)
 return v0
 })()
     `.trim(),

@@ -165,7 +165,7 @@ const options = {
 }
 
 const str = cyclepack.encode(data, options)
-// O1_4:1,8:5·M2,3·+NaN·42·tmap·A4_7:6·1·3·tondragleave
+// O1_4:1,8:5·M3,2·42·+NaN·tmap·A4_7:6·1·3·tondragleave
 
 const obj = cyclepack.decode(str)
 // Результат:
@@ -184,15 +184,15 @@ eval(forEval) == obj
 /*
 (function() {
 var
-v2=NaN,
-v3=42,
+v2=42,
+v3=NaN,
 v1=new Map(),
 v4="map",
 v6=1,
 v5=Array(4),
 v7="ondragleave",
 v0={}
-v1.set(v2,v3)
+v1.set(v3,v2)
 v0[v4]=v1
 v5[3]=v6
 v0[v7]=v5
@@ -290,7 +290,7 @@ const options = {
 }
 
 const str = cyclepack.encode(data, options)
-// M1,4·A0_2,3·1·2·A0_5,6·3·4
+// M4,1·A0_2,3·3·4·A0_5,6·1·2
 
 const obj = cyclepack.decode(str)
 // Результат:
@@ -311,18 +311,18 @@ eval(forEval) == obj
 /*
 (function() {
 var
-v2=1,
-v3=2,
+v2=3,
+v3=4,
 v1=[],
-v5=3,
-v6=4,
+v5=1,
+v6=2,
 v4=[],
 v0=new Map()
 v1[0]=v2
 v1[1]=v3
 v4[0]=v5
 v4[1]=v6
-v0.set(v1,v4)
+v0.set(v4,v1)
 return v0
 })()
 */
