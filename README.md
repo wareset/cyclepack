@@ -32,11 +32,13 @@ parse @ build.js:233
 */
 ```
 
+То есть, если при упаковке данных в них, даже случайно окажется `Symbol`, `devalue` упакует их без каких-либо предупреждений. Но, при попытке распаковать эти данные, всё упадёт.
+
 Именно поэтому и приходится писать собственные решения.
 
 ## Установка:
 
-На `npm` лежит первая версия, написанная несколько лет назад и использовать её не стоит. Здесь лежит вторая версия, но она еще не добавлена на `npm` и поэтому, чтобы установить её с `github`, нужно прописать следующее в `package.json`:
+На `npm` лежит первая версия `cyclepack`, написанная несколько лет назад и использовать её не стоит. Здесь сейчас лежит вторая версия, но она еще не добавлена на `npm` и поэтому, чтобы установить её с `github`, нужно прописать следующее в `package.json`:
 
 package.json
 
@@ -48,7 +50,7 @@ package.json
 }
 ```
 
-## Наглядный пример:
+## Наглядный пример возможностей:
 
 ```js
 import * as cyclepack from 'cyclepack'
@@ -64,7 +66,7 @@ object[Symbol.for('123')] = 123
 // наш объект
 const data = object
 
-// превращаем его в строку
+// упаковываем его в строку
 const str = cyclepack.encode(data)
 console.log(str)
 // P1_6:5,8:7·O1_3:2,4:1·1·ta·tself·2·tb·123·k7
@@ -72,11 +74,11 @@ console.log(str)
 // возвращаем из строки первоначальный объект
 const obj = cyclepack.decode(str)
 
-// obj и data будут полностью эквивалентны
+// obj и data будут полностью идентичны
 // 'node:assert'
 assert.deepStrictEqual(obj, data)
-// далее, в качестве эквивалентности,
-// будет использоваться такая конструкция:
+// далее, в качестве идентичности,
+// будет использоваться такая форма записи:
 obj == data
 
 // превратим объект в исполняемый код
@@ -137,7 +139,7 @@ function decode(data: string, options?: IDecodeOptions): any
 
 ### Options: filterByList
 
-Массив `filterByList` позволяет исключить какие-либо данные из упаковки.
+Массив `filterByList` позволяет исключить какие-либо значения из упаковки.
 
 Например:
 
@@ -146,7 +148,7 @@ import * as cyclepack from 'cyclepack'
 
 // Какие-то данные
 const data = {
-  ondrag: new Map([[NaN, 42], [999, 0]]),
+  map: new Map([[NaN, 42], [999, 0]]),
   ondragend: 0,
   ondragenter: null,
   ondragleave: [0, -0, NaN, 1],
@@ -156,21 +158,21 @@ const data = {
 
 const options = {
   // Нам нужно передать только актуальные значения
-  // и отфильтровать 'null', '0' и 'NaN':
+  // и исключить 'null', '0' и 'NaN':
   filterByList: [null, 0, NaN],
 }
 
 const str = cyclepack.encode(data, options)
-// O1_4:1,8:5·M2,3·+NaN·42·tondrag·A4_7:6·1·3·tondragleave
+// O1_4:1,8:5·M2,3·+NaN·42·tmap·A4_7:6·1·3·tondragleave
 
 const obj = cyclepack.decode(str)
 // Результат:
-// Все 'null', '0' и 'NaN' были отфильтрованы,
+// Все 'null', '0' и 'NaN' были исключены,
 // но в 'Map' ключ 'NaN' остался, потому что
 // значение '42' без ключа существовать не может
 obj ==
   {
-    ondrag: new Map([[NaN, 42]])
+    map: new Map([[NaN, 42]])
     ondragleave: [, , , 1],
   }
 
@@ -183,7 +185,7 @@ var
 v2=NaN,
 v3=42,
 v1=new Map(),
-v4="ondrag",
+v4="map",
 v6=1,
 v5=Array(4),
 v7="ondragleave",
@@ -224,7 +226,7 @@ const data = [
 
 const options = {
   filterByList: [null, 0, NaN],
-  // Например, так мы отфильтруем все строки
+  // Например, так мы исключим все строки:
   filterByFunction: (v) => typeof v !== 'string',
 }
 
@@ -428,7 +430,7 @@ const data = {
 }
 
 const str = cyclepack.encode(data, options)
-// O1_4:1·A3_2,3:3·1·2·tlist
+// O1_2:1·M·tmap
 
 const obj = cyclepack.decode(str)
 // Результат:
@@ -466,6 +468,7 @@ const data = {
 }
 
 const optionsForEncode = {
+  // это здесь для примера:
   filterByFunction: (v) => typeof v !== 'string',
   // Подготовим функцию к упаковке.
   // Используем самый простой способ, чтобы была понятна суть:
@@ -482,10 +485,10 @@ const obj = cyclepack.decode(str)
 obj == { fn_1: 'MY_SUPER_FN' }
 
 /*
-Функция 'fn_2' была отфильтрована, а для 'fn_1' вернулась
-строка 'MY_SUPER_FN', не смотря на то, что у нас стоит 
-'filterByFunction', которая фильтрует все строки и из-за неё
-была отфильтрована строка 'some string'.
+Функция 'fn_2' была исключена, а вот для 'fn_1' вернулась
+строка 'MY_SUPER_FN', даже не смотря на то, что у нас стоит 
+'filterByFunction', которая фильтрует все строки (и из-за неё
+была отфильтрована строка 'some string').
 
 Важно:
 При вызове 'prepareFunctions', 'prepareClasses' и 'prepareErrors',
@@ -522,9 +525,9 @@ const data = {
 
 {
   const optionsForUneval = {
+    // это здесь для примера:
     filterByFunction: (v) => typeof v !== 'string',
-    // Если возвращается не строка, то значение будет упаковано,
-    // но все модификации будут проигнорированы:
+    // Если возвращается не строка, то значение будет упаковано:
     prepareFunctions: (fn) => {
       if (fn === my_super_fn) return ['MY_SUPER_FN']
     },
@@ -532,7 +535,7 @@ const data = {
 
   const forEval = cyclepack.uneval(data, optionsForUneval)
   // Результат:
-  forEval == { fn_1: ['MY_SUPER_FN'] }
+  eval(forEval) == { fn_1: ['MY_SUPER_FN'] }
   /*
 (function() {
 var
@@ -551,14 +554,14 @@ return v0
 {
   const optionsForEncode = {
     // Если возвращается строка, то она будет помещена
-    // в результат как есть, без изменений:
+    // в финальный результат как есть, без изменений:
     prepareFunctions: (fn) => {
       if (fn === my_super_fn) return '12345'
     },
   }
   const forEval = cyclepack.uneval(data, optionsForUneval)
   // Результат:
-  forEval == { fn_1: 12345 }
+  eval(forEval) == { fn_1: 12345 }
   /*
 (function() {
 var
@@ -581,19 +584,12 @@ return v0
 
 Функция `prepareClasses` используется для подготовки классовых объектов к упаковке/распаковке (`encode`/`decode`) или передаче к исполнению (`uneval`).
 
-В `prepareClasses` возвращаемые значения `void 0` и `null` ведат себя по разному.
+В `prepareClasses` возвращаемые значения `void 0` и `null` ведут себя по разному.
 
 Пример, где `prepareClasses` равна `null`:
 
 ```js
 import * as cyclepack from 'cyclepack'
-
-const options = {
-  // Эти опции полностью эквивалентны
-  // и любой нестандартный объект будет отфильтрован
-  prepareClasses: null,
-  prepareClasses: () => null,
-}
 
 class CustomClass {}
 class CustomArray extends Array {}
@@ -605,12 +601,19 @@ const data = {
   customArray: new CustomArray(42),
 }
 
+const options = {
+  // Эти опции полностью эквивалентны
+  // и любой нестандартный объект будет исключён:
+  prepareClasses: null,
+  prepareClasses: () => null,
+}
+
 const str = cyclepack.encode(data, options)
 // O1_4:1,6:5·O1_3:2·1·tq·tobject·M·tmap
 
 const obj = cyclepack.decode(str)
 // Результат:
-// Все нестандартные объекты были отфильтрованы.
+// Все нестандартные объекты были исключены
 obj ==
   {
     object: { q: 1 },
@@ -655,6 +658,7 @@ const data = { vec: new Vector2D(21, 42) }
 // Пример опций для 'encode'/'decode':
 {
   const optionsForEncode = {
+    // это здесь для примера:
     filterByFunction: (v) => typeof v !== 'string',
     // Подготовим класс к упаковке.
     // Используем самый простой способ, чтобы была понятна суть:
@@ -669,7 +673,7 @@ const data = { vec: new Vector2D(21, 42) }
   const obj_1 = cyclepack.decode(str)
   // Результат:
   // Опция 'filterByFunction' никак не влияет на возвращаемые
-  // значения 'prepareClasses' и не удаляет строку из массива.
+  // значения 'prepareClasses' и не удаляет строку из массива
   obj_1 == { vec: ['Vector2D', 21, 42] }
 
   // Восстановим объект класса Vector2D:
@@ -682,16 +686,18 @@ const data = { vec: new Vector2D(21, 42) }
 
   const obj_2 = cyclepack.decode(str, optionsForDecode)
   // Результат:
-  // Восстановленный объект полностью эквивалентен объекту 'data'
+  // Восстановленный объект полностью идентичен объекту 'data'
   obj_2 == { vec: new Vector2D(21, 42) }
   obj_2 == data
 }
 
 // Пример опций для 'uneval':
 {
+  // Пример номер 1
+
   const optionsForUneval_1 = {
     // Если возвращается не строка, то возвращаемое значение будет
-    // упаковано, но без модификаций ('filterByList' и так далее)
+    // упаковано, но без модификаций ('filterByList' и так далее):
     prepareClasses: (obj) => {
       if (obj instanceof Vector2D) return ['Vector2D', obj.x, obj.y]
     },
@@ -718,18 +724,20 @@ return v0
 })()
   */
 
+  // Пример номер 2
+
   const optionsForUneval_2 = {
-    // Если возвращается строка, то встраивается как есть
-    // без каки-либо изменений.
+    // Если возвращается строка, то она встраивается в
+    // финальный результат как есть, без каки-либо изменений.
     // Нужно иметь это ввиду и помнить об XSS уязвимостях.
     prepareClasses: (obj) => {
       if (obj instanceof Vector2D) return `new Vector2D(${obj.x}, ${obj.y})`
     },
   }
 
-  const forEval_2 = cyclepack.uneval(data, optionsForUneval_1)
+  const forEval_2 = cyclepack.uneval(data, optionsForUneval_2)
   // Результат:
-  // Результат полностью эквивалентен объекту 'data'
+  // Результат полностью идентичен объекту 'data'
   eval(forEval_2) == { vec: new Vector2D(21, 42) }
   eval(forEval_2) == data
   /*
@@ -751,13 +759,14 @@ return v0
 import * as cyclepack from 'cyclepack'
 
 const options = {
-  // Эти опции полностью эквивалентны
-  // и любой нестандартный объект будет упакован
+  // Эти опции полностью эквивалентны и любой
+  // нестандартный объект будет упакован автоматически:
   prepareClasses: void 0,
   prepareClasses: () => void 0,
 }
 
 class CustomArray extends Array {}
+
 class Vector2D {
   constructor(x, y) {
     this.x = x
@@ -775,15 +784,23 @@ const str = data.encode(data, options)
 
 const obj = data.decode(str)
 // Результат:
-// CustomArray будет интерпретироваться как обычный массив
+// CustomArray будет интерпретироваться как обычный массив,
+// так как наследуется от стандартного массива и 'cyclepack'
+// знает это. С другими стандартными объектами будет так же.
+//
 // А вот для Vector2D 'cyclepack' создаст свой системный
 // класс с названием 'CyclepackClass.Vector2D', а так же
 // скрытым свойством '_CyclepackClass: "Vector2D"'.
-// Он будет в 'globalThis', в объекте 'CyclepackClass'.
+// Он будет храниться в 'globalThis', в объекте 'CyclepackClass'.
 obj ==
   {
     arr: Array(42),
-    vec: /* new CyclepackClass.Vector2D */ { x: 21, y: 42 },
+    vec: (() => {
+      const res = new globalThis.CyclepackClass.Vector2D()
+      res.x = 21
+      res.y = 42
+      return res
+    })(),
   }
 
 const forEval = cyclepack.uneval(data)
@@ -855,7 +872,7 @@ return v0
   - Float16Array
   - Float32Array
   - Float64Array
-- Объекты ошибок (о них информация ниже):
+- Объекты ошибок (включая 'prepareErrors'):
   - Error
   - AggregateError
   - EvalError
@@ -865,27 +882,27 @@ return v0
   - TypeError
   - URIError
 
-У `Array` и `Map` есть определённые правила упаковки.
+### Для `Array` и `Map` существуют особые правила упаковки.
 
-### Специфика Array
+#### Специфика Array
 
 У массивов упаковываются не только целочисленные ключи, но и любые другие, установленные дополнительно. Например:
 
 ```js
 import * as cyclepack from 'cyclepack'
 
-const array = /\s/.exec('some string')
+const array = /\s/.exec('some string') // получаем массив
 
 const str = cyclepack.encode(array)
 // A1_1,3:2,5:4,7:6·t ·3·tindex·tqwe asd·tinput·u·tgroups
 
 const obj = cyclepack.decode(str)
-// obj === [' ', index: 4, input: 'some string', groups: undefined]
+// obj == [' ', index: 4, input: 'some string', groups: undefined]
 ```
 
 Все дополнительные свойства (`index`, `input`, `groups`) для массива, так же были сохранены. Поскольку добавление нецелочисленных ключей в массив является частой практикой, что даже подтверждается примером выше.
 
-То есть `Array` и `Object` обрабатываются одинаково. Все остальные объекты обрабатываются в соответствии со спецификой их работы. Например:
+То есть `Array` и `Object` обрабатываются одинаково, а все остальные объекты - в соответствии со спецификой своей работы. Например:
 
 ```js
 {
@@ -897,7 +914,7 @@ const obj = cyclepack.decode(str)
 
   const obj = cyclepack.decode(str)
   // Свойство 'some_key_1' будет проигнорировано
-  obj === new RegExp('[^]', 'gi')
+  obj == new RegExp('[^]', 'gi')
 }
 
 // или
@@ -911,10 +928,10 @@ const obj = cyclepack.decode(str)
 
   const obj = cyclepack.decode(str)
   // Свойство 'some_key_2' будет проигнорировано
-  obj === new Set([1, 2])
+  obj == new Set([1, 2])
 }
 
-// и так далее, для всех остальных базовых объектов
+// и так далее, для всех остальных объектов
 ```
 
 ## License
