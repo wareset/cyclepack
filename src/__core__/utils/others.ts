@@ -76,13 +76,6 @@ export function isPrototypeLikeObject(prototype: any) {
 //   return false
 // }
 
-export function checkIsCircularError(a: any, b: any) {
-  if (a === b) {
-    console.error(a)
-    throw 'Cyclepack: circular'
-  }
-}
-
 export function fastCheckMapKey(
   key: any,
   prepareFunctions: any,
@@ -90,35 +83,37 @@ export function fastCheckMapKey(
   prepareErrors: any
 ) {
   if (key) {
-    let type: any = typeof key
-
-    if (
-      type === 'function' &&
-      (prepareFunctions == null || prepareFunctions(key) == null)
-    ) {
-      return false
-    }
-
-    if (type === 'object') {
-      if (
-        key instanceof Error &&
-        (prepareErrors === null ||
-          (prepareErrors && prepareErrors(key) === null))
-      ) {
-        return false
-      }
-
-      type = Object.getPrototypeOf(key)
-      if (
-        type &&
-        type !== Object.prototype &&
-        !isPrototypeLikeObject(type) &&
-        type !== getGlobalThis()[getObjectName(key)].prototype &&
-        (prepareClasses === null ||
-          (prepareClasses && prepareClasses(key) === null))
-      ) {
-        return false
-      }
+    switch (typeof key) {
+      case 'function':
+        if (
+          prepareFunctions == null ||
+          key === (key = prepareFunctions(key)) ||
+          key == null
+        ) {
+          return false
+        }
+        break
+      case 'object':
+        if (key instanceof Error) {
+          if (
+            prepareErrors === null ||
+            (prepareErrors && prepareErrors(key) === null)
+          ) {
+            return false
+          }
+        } else {
+          const proto = Object.getPrototypeOf(key)
+          if (
+            proto &&
+            proto !== Object.prototype &&
+            !isPrototypeLikeObject(proto) &&
+            proto !== getGlobalThis()[getObjectName(key)].prototype &&
+            (prepareClasses === null ||
+              (prepareClasses && prepareClasses(key) === null))
+          ) {
+            return false
+          }
+        }
     }
   }
   return true

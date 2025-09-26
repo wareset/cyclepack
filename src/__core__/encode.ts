@@ -9,7 +9,6 @@ import {
   noopReturnTrue,
   noopReturnFirst,
   fastCheckMapKey,
-  checkIsCircularError,
   isPrototypeLikeObject,
 } from './utils/others'
 
@@ -102,7 +101,7 @@ export default function encode(data: any, options?: EncodeOrUnevalOptions) {
           n = prepareClasses(v)
           if (n === null) {
             n = NaN
-          } else if (n === void 0) {
+          } else if (n === void 0 || n === v) {
             n = v
           } else {
             n = 'C' + parse(n, 1, 1)
@@ -160,10 +159,9 @@ export default function encode(data: any, options?: EncodeOrUnevalOptions) {
             break
           case 'function':
             n = prepareFunctions && prepareFunctions(v)
-            if (n == null) {
+            if (n == null || n === v) {
               n = NaN
             } else {
-              checkIsCircularError(n, v)
               n = 'f' + parse(n, 1, 1)
             }
             break
@@ -217,7 +215,7 @@ export default function encode(data: any, options?: EncodeOrUnevalOptions) {
                   n = prepareErrors && prepareErrors(v)
                   if (n === null) {
                     n = NaN
-                  } else if (n === void 0) {
+                  } else if (n === void 0 || n === v) {
                     n =
                       'E' +
                       parse(String(v.constructor.name), 1) +
@@ -229,7 +227,6 @@ export default function encode(data: any, options?: EncodeOrUnevalOptions) {
                       (v.stack ? parse(v.stack, 1) : '') +
                       (v.errors ? '_' + parse(v.errors, 1) : '')
                   } else {
-                    checkIsCircularError(n, v)
                     n = 'E' + parse(n, 1, 1)
                   }
                   break
@@ -344,7 +341,7 @@ export default function encode(data: any, options?: EncodeOrUnevalOptions) {
                     n = prepareClasses && prepareClasses(v)
                     if (n === null) {
                       n = NaN
-                    } else if (n === void 0) {
+                    } else if (n === void 0 || n === v) {
                       // CyclepackClass
                       n = getObjProps(v)
                       n =
@@ -353,7 +350,6 @@ export default function encode(data: any, options?: EncodeOrUnevalOptions) {
                           : NaN
                     } else {
                       // User Class
-                      checkIsCircularError(n, v)
                       n = 'C' + parse(n, 1, 1)
                     }
                   }

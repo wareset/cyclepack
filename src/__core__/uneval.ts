@@ -8,7 +8,6 @@ import {
   noopReturnTrue,
   noopReturnFirst,
   fastCheckMapKey,
-  checkIsCircularError,
   isPrototypeLikeObject,
 } from './utils/others'
 
@@ -157,7 +156,7 @@ function n(v){return new CyclepackClass[v]()}`
           n = prepareClasses(v)
           if (n === null) {
             n = NaN
-          } else if (n === void 0) {
+          } else if (n === void 0 || n === v) {
             n = v
           } else if (typeof n !== 'string') {
             n = parse(n, 1, 1)
@@ -210,10 +209,9 @@ function n(v){return new CyclepackClass[v]()}`
             break
           case 'function':
             n = prepareFunctions && prepareFunctions(v)
-            if (n == null) {
+            if (n == null || n === v) {
               n = NaN
             } else if (typeof n !== 'string') {
-              checkIsCircularError(n, v)
               n = parse(n, 1, 1)
             }
             break
@@ -264,7 +262,7 @@ function n(v){return new CyclepackClass[v]()}`
                   n = prepareErrors && prepareErrors(v)
                   if (n === null) {
                     n = NaN
-                  } else if (n === void 0) {
+                  } else if (n === void 0 || n === v) {
                     globalIsAdded ||
                       (globalIsAdded = listClassesAndGlobal.push(getGlobal))
                     n = [
@@ -280,7 +278,6 @@ try{_= e?(new F([],m,c)):(new F(m,c))}catch{_=new Error(m,c);_._CyclepackError=f
 e&&(_.errors=e);s&&(_.stack=s);return _
 })(${n})`
                   } else if (typeof n !== 'string') {
-                    checkIsCircularError(n, v)
                     n = parse(n, 1, 1)
                   }
                   break
@@ -403,7 +400,7 @@ e&&(_.errors=e);s&&(_.stack=s);return _
                     n = prepareClasses && prepareClasses(v)
                     if (n === null) {
                       n = NaN
-                    } else if (n === void 0) {
+                    } else if (n === void 0 || n === v) {
                       // CyclepackClass
                       type = String(type.constructor.name)
                       n = getObjProps(v, idx)
@@ -413,7 +410,6 @@ e&&(_.errors=e);s&&(_.stack=s);return _
                           : NaN
                     } else if (typeof n !== 'string') {
                       // User Class
-                      checkIsCircularError(n, v)
                       n = parse(n, 1, 1)
                     }
                   }
