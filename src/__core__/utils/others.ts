@@ -1,11 +1,19 @@
+export const ERROR_CLASSES = {
+  __proto__: null,
+  Error: 1,
+  AggregateError: 1,
+  EvalError: 1,
+  RangeError: 1,
+  ReferenceError: 1,
+  SyntaxError: 1,
+  TypeError: 1,
+  URIError: 1,
+}
+
 export const __String__ = String
 
 export function noopReturnFirst(v: any) {
   return v
-}
-
-export function noopReturnNaN() {
-  return NaN
 }
 
 export function noopReturnTrue() {

@@ -4,7 +4,6 @@ import {
   __String__ as String,
   keyToNumMayBe,
   getGlobalThis,
-  noopReturnNaN,
   noopReturnTrue,
   noopReturnFirst,
   checkIsCircularError,
@@ -166,8 +165,10 @@ function n(v){return new CyclepackClass[v]()}`
         return n
       }
     : prepareClasses === null
-      ? noopReturnNaN
-      : noopReturnFirst
+    ? function (v: any, type: any, funcName: string) {
+        return type !== global[funcName].prototype ? NaN : v
+      }
+    : noopReturnFirst
 
   function parse(v: any, allowAll?: 1 | 0, setAllowAllDeep?: 1 | 0) {
     setAllowAllDeep && ++allowAllDeep

@@ -5,7 +5,6 @@ import {
   __String__ as String,
   keyToNumMayBe,
   getGlobalThis,
-  noopReturnNaN,
   noopReturnTrue,
   noopReturnFirst,
   checkIsCircularError,
@@ -110,7 +109,9 @@ export default function encode(data: any, options?: IEncodeOrUnevalOptions) {
         return n
       }
     : prepareClasses === null
-      ? noopReturnNaN
+      ? function (v: any, type: any, funcName: string) {
+          return type !== global[funcName].prototype ? NaN : v
+        }
       : noopReturnFirst
 
   function parse(v: any, allowAll?: 1 | 0, setAllowAllDeep?: 1 | 0): number {
