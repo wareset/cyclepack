@@ -1,263 +1,491 @@
 # cyclepack
-Packing and unpacking of built-in objects while preserving instances
 
-It is needed to transfer large and complex data between the client and the server, or between workers
+Данная библиотека умеет "упаковывать"/"распаковывать", а так же создавать "eval" код для разных javascript объектов и примитивов. Она очень похожа на библиотеки [devalue](https://github.com/sveltejs/devalue) и ей подобные, но имеет больше возможностей и настроек.
 
-It seems that all standard JavaScript objects are supported
+## Зачем?
 
-## What is it for?
+Из всех существующих решений найти подходящий инструмент не удалось.
 
-1. More efficient than JSON.stringify:
+Например `devalue`, кажется самой лучшей, но:
+
 ```js
-import cyclepack from 'cyclepack';
-// or import { pack, unpack } from 'cyclepack'
-// or const { pack, unpack } = require('cyclepack')
+// version 5.1.1
+import * as devalue from 'devalue'
 
-const SOME_BIG_OBJECT = [
-  { deep: 0, type: 'Keyword', value: 'function' },
-  { deep: 0, type: 'Space', value: ' ' },
-  { deep: 0, type: 'Identifier', value: 'App' },
-  { deep: 0, type: 'Punctuator', value: '(' },
-  { deep: 1, type: 'Identifier', value: 'props' },
-  { deep: 0, type: 'Punctuator', value: ')' },
-  { deep: 0, type: 'Space', value: ' ' },
-  { deep: 0, type: 'Punctuator', value: '{' },
-  { deep: 1, type: 'Space', value: '\n  ' },
-  { deep: 1, type: 'Keyword', value: 'return' },
-  { deep: 1, type: 'Space', value: ' ' },
-  { deep: 1, type: 'JSXTagOpenerStart', value: '<' },
-  { deep: 2, type: 'Identifier', value: 'div' },
-  { deep: 1, type: 'JSXTagOpenerEnd', value: '>' },
-  { deep: 2, type: 'JSXText', value: 'some ' },
-  { deep: 2, type: 'JSXExpressionStart', value: '{' },
-  { deep: 3, type: 'Numeric', value: '12' },
-  { deep: 2, type: 'JSXExpressionEnd', value: '}' },
-  { deep: 1, type: 'JSXTagCloserStart', value: '</' },
-  { deep: 2, type: 'Identifier', value: 'div' },
-  { deep: 1, type: 'JSXTagCloserEnd', value: '>' },
-  { deep: 1, type: 'Space', value: '\n' },
-  { deep: 0, type: 'Punctuator', value: '}' }
-]
+const data = [Symbol.for('123')]
 
-// Example JSON.stringify:
-const objectToJsonStringify = JSON.stringify(SOME_BIG_OBJECT)
-console.log(objectToJsonStringify.length) // 1023 symbols
+const str = devalue.stringify(data)
+console.log(str) // [[1],Symbol(123)]
 
-// Example cyclepack.pack:
-const objectToCyclePack = cyclepack.pack(SOME_BIG_OBJECT)
-console.log(objectToCyclePack.length) // 570 symbols
-
-console.log(objectToCyclePack)
-// [{"deep":a,"type":"Keyword","value":"function"},{t:a,u:"Space",w:" "},{t:a,u:"Identifier",w:"App"},{t:a,u:"Punctuator",w:"("},{t:b,u:ac,w:"props"},{t:a,u:af,w:")"},{t:a,u:z,w:aa},{t:a,u:af,w:"{"},{t:b,u:z,w:"\n  "},{t:b,u:v,w:"return"},{t:b,u:z,w:aa},{t:b,u:"JSXTagOpenerStart",w:"<"},{t:c,u:ac,w:"div"},{t:b,u:"JSXTagOpenerEnd",w:">"},{t:c,u:"JSXText",w:"some "},{t:c,u:"JSXExpressionStart",w:an},{t:d,u:"Numeric",w:Q12},{t:c,u:"JSXExpressionEnd",w:"}"},{t:b,u:"JSXTagCloserStart",w:"</"},{t:c,u:ac,w:ax},{t:b,u:"JSXTagCloserEnd",w:ba},{t:b,u:z,w:"\n"},{t:a,u:af,w:bm}]
-
-const restoringObject = cyclepack.unpack(objectToCyclePack)
-
-// jest
-expect(SOME_BIG_OBJECT).toStrictEqual(restoringObject)
-// the objects are completely equal
+const obj = devalue.parse(str)
+// Упадёт с ошибкой:
+/*
+01:58:43.123 VM106446:1 Uncaught SyntaxError: Unexpected token 'S',
+"[[1],Symbol(123)]" is not valid JSON
+    at JSON.parse (<anonymous>)
+    at parse (build.js:233:25)
+    at build.js:617:15
+    at build.js:628:3
+parse @ build.js:233
+(анонимная) @ build.js:617
+(анонимная) @ build.js:628
+*/
 ```
 
-2. Considers references to objects:
-```js
-import cyclepack from 'cyclepack';
+Именно поэтому и приходится писать собственные решения.
 
-const object = { q: 1, w: 2, e: 3 }
+## Установка:
 
-const SOME_BIG_OBJECT = [
-  object,
-  object,
-  object,
-  object,
-  object,
-  object,
-  object,
-  object,
-  object,
-  object,
-  object,
-  object,
-  object,
-  object,
-  object,
-  object,
-  object,
-  object,
-  object,
-  object,
-  object,
-  object,
-]
+На `npm` лежит первая версия, написанная несколько лет назад и использовать её не стоит. Здесь лежит вторая версия, но она еще не добавлена на `npm` и поэтому, чтобы установить её с `github`, нужно прописать следующее в `package.json`:
 
-// Example JSON.stringify:
-const objectToJsonStringify = JSON.stringify(SOME_BIG_OBJECT)
-console.log(objectToJsonStringify.length) // 441
+package.json
 
-// Example cyclepack.pack:
-const objectToCyclePack = cyclepack.pack(SOME_BIG_OBJECT)
-console.log(objectToCyclePack.length) // 63
-
-console.log(objectToCyclePack)
-// [{"q":b,"w":c,"e":d},s,s,s,s,s,s,s,s,s,s,s,s,s,s,s,s,s,s,s,s,s]
-
-// jest
-expect(SOME_BIG_OBJECT).toStrictEqual(cyclepack.unpack(objectToCyclePack))
-// the objects are completely equal
-```
-
-3. Works with recursive data:
-```js
-import cyclepack from 'cyclepack';
-
-const SOME_BIG_OBJECT = { q: 1, w: 2, e: 3 }
-SOME_BIG_OBJECT.r = SOME_BIG_OBJECT
-
-// FAIL
-// Example JSON.stringify:
-// const objectToJsonStringify = JSON.stringify(SOME_BIG_OBJECT)
-// Uncaught TypeError: Converting circular structure to JSON
-
-// Example cyclepack.pack:
-const objectToCyclePack = cyclepack.pack(SOME_BIG_OBJECT)
-console.log(objectToCyclePack.length)
-
-console.log(objectToCyclePack)
-// {"q":b,"w":c,"e":d,"r":r}
-
-// jest
-expect(SOME_BIG_OBJECT).toStrictEqual(cyclepack.unpack(objectToCyclePack))
-```
-
-4. Restores standard JavaScript objects:
-```js
-import cyclepack from 'cyclepack';
-
-const SET = new Set([1, 2, 3, 4, 5])
-
-const setToCyclePack = cyclepack.pack(SET)
-
-// jest
-expect(SET).toStrictEqual(cyclepack.unpack(setToCyclePack))
-// the objects are completely equal
-```
-
-### List of supported objects:
-- BigInt
-- Object
-- Boolean
-- Symbol
-- Number
-- Date
-- String
-- RegExp
-- Array
-- Map
-- Set
-- ArrayBuffer
-- DataView
-- Int8Array
-- Uint8Array
-- Uint8ClampedArray
-- Int16Array
-- Uint16Array
-- Int32Array
-- Uint32Array
-- Float32Array
-- Float64Array
-- BigInt64Array
-- BigUint64Array
-- Function* (Async and Generator) (more on this below)
-- Error* (more on this below)
-- AggregateError*
-- EvalError*
-- RangeError*
-- ReferenceError*
-- SyntaxError*
-- TypeError*
-- URIError*
-
-### *Transfer of functions
-The `cyclepack` will not transfer the source code of any functions. Instead, their names will be transmitted. And when unpacking, they will be wrapped in a sign `%`:
-```js
-import cyclepack from 'cyclepack';
-
-const someFunc = () => {}
-
-const packed = cyclepack.pack(someFunc)
-console.log(packed) // Z"someFunc"
-
-const unpacked = cyclepack.unpack(packed)
-console.log(unpacked) // %someFunc%
-```
-
-But, to identify the functions, the `cyclepack` has a second parameter `proxyForFunctions`:
-```js
-import cyclepack from 'cyclepack';
-
-const someFunc = () => {}
-const someFunc2 = () => {}
-
-const packed = cyclepack.pack([someFunc, someFunc2], (func) => {
-  if (func === someFunc) return 'FN_UNIQUE_TEXT_ID'
-  return null
-})
-console.log(packed) // [Z"FN_UNIQUE_TEXT_ID",Z"someFunc2"]
-
-const unpacked = cyclepack.unpack(packed, (fnID) => {
-  if (fnID === 'FN_UNIQUE_TEXT_ID') return someFunc
-  return null
-})
-console.log(unpacked) // [someFunc, '%someFunc2%']
-
-// jest
-expect(unpacked).toStrictEqual([someFunc, '%someFunc2%']) // there will be true
-```
-
-### *Transfer Errors
-```js
-import cyclepack from 'cyclepack';
-
-class ServerError extends URIError {
-  code: number
-  constructor(message: string, code: number) {
-    super(message)
-    this.code = code
+```json
+{
+  "dependencies": {
+    "cyclepack": "wareset/cyclepack"
   }
 }
-
-const msg = {
-  type: 'fail',
-  data: new ServerError('Page not found', 404)
-}
-
-const msgToCyclePack = cyclepack.pack(msg)
-console.log(msgToCyclePack)
-// {"type":"fail","data":EUR{"code":404,"message":"Page not found"}}
-
-const unpackedMSG = cyclepack.unpack(msgToCyclePack)
-console.log(unpackedMSG)
-// unpackedMSG equal to:
-const res = { 
-  type: 'fail', 
-  data: new URIError('Page not found')
- }
-res.data.code = 404
 ```
 
-### Additional serialization:
-Sometimes you need to pass an additional serialization string:
+## Примеры:
+
+Примитивы:
+
 ```js
-import { pack, unpack } from 'cyclepack';
+import * as cyclepack from 'cyclepack'
 
-const data = ['some data']
+console.log(cyclepack.encode(123)) // '123'
+console.log(cyclepack.encode('123')) // 't123'
+console.log(cyclepack.encode(Symbol.for('123'))) // 'k1·123'
+console.log(cyclepack.encode(null)) // 'n'
+console.log(cyclepack.encode(void 0)) // ''
+```
 
-const packed = pack(data, null, true) // the third parameter should be 'true'
-console.log(JSON.stringify(pack(data)) === packed) // true
+Объект с объектным прототипом:
 
-const unpacked = unpack(JSON.parse(packed))
+```js
+import * as cyclepack from 'cyclepack'
 
-// jest
-expect(data).toStrictEqual(unpacked) // true
+// Создадим объект с прототипом
+const proto = { a: 1 }
+proto.self = proto
+
+const object = Object.create(proto)
+object.b = 2
+object[Symbol.for('123')] = 123
+
+// наш объект
+const data = object
+
+// превращаем его в строку
+const str = cyclepack.encode(data)
+console.log(str)
+// P1_6:5,8:7·O1_3:2,4:1·1·ta·tself·2·tb·123·k7
+
+// возвращаем из строки первоначальный объект
+const obj = cyclepack.decode(str)
+
+// obj и data будут полностью эквивалентны
+// 'node:assert'
+assert.deepStrictEqual(obj, data)
+
+// превратим объект в исполняемый код
+const forEval = cyclepack.uneval(data)
+console.log(forEval)
+/*
+(function() {
+var
+v2=1,
+v3="a",
+v4="self",
+v1={},
+v5=2,
+v6="b",
+v7=123,
+v8=Symbol.for(v7),
+v0=Object.create(v1)
+v1[v3]=v2
+v1[v4]=v1
+v0[v6]=v5
+v0[v8]=v7
+return v0
+})()
+*/
+```
+
+## Инструкция:
+
+В `cyclepack` входят 3 функции `encode`, `decode` и `uneval`:
+
+```typescript
+interface IEncodeOrUnevalOptions {
+  filterByList?: any[]
+  filterByFunction?: (Any) => boolean
+
+  removeArrayHoles?: boolean
+  removeEmptyObjects?: boolean
+
+  prepareFunctions?: null | ((Function) => any)
+  prepareClasses?: null | ((Object) => any)
+  prepareErrors?: null | ((Error) => any)
+}
+
+function encode(data: any, options?: IEncodeOrUnevalOptions): string
+function uneval(data: any, options?: IEncodeOrUnevalOptions): string
+
+interface IDecodeOptions {
+  prepareFunctions?: null | ((data) => any)
+  prepareClasses?: null | ((data) => any)
+  prepareErrors?: null | ((data) => any)
+}
+
+function decode(data: string, options?: IDecodeOptions): any
+```
+
+Основная задача данной библиотеки - упаковать данные для передачи между сервером и клиентом, или создать готовые данные (через uneval) чтобы вставить их в шаблон для SSR, например. Но часто не все данные нужны для передачи. Поэтому у функций есть опции, которые позволят подготовить все данные более правильно.
+
+### Options: filterByList
+
+Массив `filterByList` позволяет исключить какие-либо данные из упаковки.
+
+Например:
+
+```js
+import * as cyclepack from 'cyclepack'
+
+// Какие-то данные
+const data = {
+  ondrag: null,
+  ondragend: [-1, 0, NaN, 1],
+  ondragenter: null,
+  ondragleave: [0, -0, NaN, 1],
+  ondragover: null,
+  ondragstart: null,
+}
+
+// Нам нужно передать только актуальные значения
+// и отфильтровать 'null', '0' и 'NaN'
+const options = {
+  filterByList: [null, 0, NaN],
+}
+
+const str = cyclepack.encode(data, options)
+// O1_5:1,7:6·A4_2,4:3·-1·1·3·tondragend·A4·tondragleave
+
+const obj = cyclepack.decode(str)
+// Результат:
+obj ===
+  {
+    ondragend: [-1, , , 1],
+    ondragleave: [, , , 1],
+  }
+
+const forEval = cyclepack.uneval(data, options)
+// Результат:
+/*
+(function() {
+var
+v2=-1,
+v3=1,
+v1=Array(4),
+v4="ondragend",
+v5=Array(4),
+v6="ondragleave",
+v0={}
+v1[0]=v2
+v1[3]=v3
+v0[v4]=v1
+v5[3]=v3
+v0[v6]=v5
+return v0
+})()
+*/
+```
+
+### Options: filterByFunction
+
+Функция `filterByFunction` работает как `filter` у массива.
+
+Например:
+
+```js
+import * as cyclepack from 'cyclepack'
+
+const data = [
+  0,
+  'ondrag',
+  -3,
+  'ondragend',
+  9,
+  'ondragenter',
+  -0,
+  'ondragleave',
+  4,
+]
+
+// Например, удалим все строки из упаковки
+const options = {
+  filterByFunction: (v) => typeof v !== 'string',
+}
+
+const str = cyclepack.encode(data, options)
+// A9_1,3:2,5:4,7:6,8:5·0·-3·2·9·4·-0·6·8
+
+const obj = cyclepack.decode(str)
+// Результат:
+obj === [0, , -3, , 9, , 0, , 4]
+
+const forEval = cyclepack.uneval(data, options)
+// Результат:
+/*
+(function() {
+var
+v1=0,
+v2=-3,
+v3=9,
+v4=-0,
+v5=4,
+v0=Array(9)
+v0[0]=v1
+v0[2]=v2
+v0[4]=v3
+v0[6]=v4
+v0[8]=v5
+return v0
+})()
+*/
+```
+
+### Options: removeArrayHoles
+
+По умолчанию `cyclepack` оставляет "дыры" в массивах. Опция `removeArrayHoles` позволяет убрать их.
+
+Пример:
+
+```js
+import * as cyclepack from 'cyclepack'
+
+// Массив из примера выше
+const data = [0, , -3, , 9, , 0, , 4]
+
+const options = {
+  removeArrayHoles: true,
+}
+
+const str = cyclepack.encode(data, options)
+// A0_1,2,3,1,4·0·-3·9·4
+
+const obj = cyclepack.decode(str)
+// Результат:
+obj === [0, -3, 9, 0, 4]
+
+const forEval = cyclepack.uneval(data, options)
+// Результат:
+/*
+(function() {
+var
+v1=0,
+v2=-3,
+v3=9,
+v4=4,
+v0=[]
+v0[0]=v1
+v0[1]=v2
+v0[2]=v3
+v0[3]=v1
+v0[4]=v4
+return v0
+})()
+*/
+```
+
+### Options: removeEmptyObjects
+
+Опция `removeEmptyObjects` позволяет удалить все пустые `объекты`. А так же пустые `массивы`, `Map` и `Set`.
+
+Пример:
+
+```js
+import * as cyclepack from 'cyclepack'
+
+{
+  const data = {
+    not_empty: 1,
+
+    empty_object: { q: {} },
+    empty_array: [{}, []],
+    // поведение с упаковкой Map будет объяснено ниже
+    empty_Map: new Map([[1, {}]]),
+    empty_Set: new Set([{}, []]),
+  }
+
+  const options = {
+    removeEmptyObjects: true,
+  }
+
+  const str = cyclepack.encode(data, options)
+  // O1_2:1·1·tnot_empty
+
+  const obj = cyclepack.decode(str)
+  // Результат:
+  obj ===
+    {
+      not_empty: [1],
+    }
+
+  const forEval = cyclepack.uneval(data, options)
+  // Результат:
+  /*
+(function() {
+var
+v1=1,
+v2="not_empty",
+v0={}
+v0[v2]=v1
+return v0
+})()
+*/
+}
+
+// `cyclepack` рекурсивно пропускал все пустые объекты.
+// В итоге в результат попал только главный объект со
+// свойством 'not_empty', которое равно '1'
+// а теперь удалим и его:
+
+{
+  const data = {
+    empty_object: { q: {} },
+    empty_array: [{}, []],
+    empty_Set: new Set([{}, []]),
+  }
+
+  const options = {
+    removeEmptyObjects: true,
+  }
+
+  const str = cyclepack.encode(data, options)
+  // '' - пустая строка
+
+  const obj = cyclepack.decode(str)
+  // Результат:
+  obj === undefined
+
+  const forEval = cyclepack.uneval(data, options)
+  // Результат:
+  /*
+  void 0
+  */
+}
+
+// Объект 'data', оказался полностью пустой и поэтому
+// был полностью исключён. Это стоит иметь ввиду.
+```
+
+## Особенности упаковки javascript объектов и примитивов:
+
+Полный список того, что упаковывается:
+
+- Примитивы:
+  - undefined
+  - null
+  - boolean
+  - number
+  - bigint
+  - string
+  - symbol
+  - function (о функциях информация ниже)
+- Базовые объекты:
+  - Boolean
+  - Number
+  - String
+  - RegExp
+  - Date
+  - Array
+  - Object
+  - Set
+  - Map
+  - URL
+  - URLSearchParams
+  - DataView
+  - ArrayBuffer
+- Типизированные массивы:
+  - Int8Array
+  - Uint8Array
+  - Uint8ClampedArray
+  - Int16Array
+  - Uint16Array
+  - Int32Array
+  - Uint32Array
+  - BigInt64Array
+  - BigUint64Array
+  - Float16Array
+  - Float32Array
+  - Float64Array
+- Объекты ошибок (о них информация ниже):
+  - Error
+  - AggregateError
+  - EvalError
+  - RangeError
+  - ReferenceError
+  - SyntaxError
+  - TypeError
+  - URIError
+
+У `Array` и `Map` есть определённые правила упаковки.
+
+### Специфика Array
+
+У массивов упаковываются не только целочисленные ключи, но и любые другие, установленные дополнительно. Например:
+
+```js
+import * as cyclepack from 'cyclepack'
+
+const array = /\s/.exec('some string')
+
+const str = cyclepack.encode(array)
+// A1_1,3:2,5:4,7:6·t ·3·tindex·tqwe asd·tinput·u·tgroups
+
+const obj = cyclepack.decode(str)
+// obj === [' ', index: 4, input: 'some string', groups: undefined]
+```
+
+Все дополнительные свойства (`index`, `input`, `groups`) для массива, так же были сохранены. Поскольку добавление нецелочисленных ключей в массив является частой практикой, что даже подтверждается примером выше.
+
+То есть `Array` и `Object` обрабатываются одинаково. Все остальные объекты обрабатываются в соответствии со спецификой их работы. Например:
+
+```js
+{
+  const regexp = /[^]/gi
+  regexp['some_key_1'] = 42
+
+  const str = cyclepack.encode(regexp)
+  // R1_2·t[^]·tgi
+
+  const obj = cyclepack.decode(str)
+  obj === new RegExp('[^]', 'gi')
+
+  // Свойство 'some_key_1' будет проигнорировано
+}
+
+// или
+
+{
+  const set = new Set([1, 2])
+  set['some_key_2'] = 42
+
+  const str = cyclepack.encode(set)
+  // S1,2·1·2
+
+  const obj = cyclepack.decode(str)
+  obj === new Set([1, 2])
+
+  // Свойство 'some_key_2' будет проигнорировано
+}
+
+// и так далее, для всех остальных базовых объектов
 ```
 
 ## License
+
 [MIT](LICENSE)
