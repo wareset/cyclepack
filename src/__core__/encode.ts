@@ -3,10 +3,12 @@ import { stringEncode } from './utils/string'
 import { arrayBufferToBase64 } from './utils/base64'
 import {
   __String__ as String,
+  getObjectName,
   keyToNumMayBe,
   getGlobalThis,
   noopReturnTrue,
   noopReturnFirst,
+  fastCheckMapKey,
   checkIsCircularError,
   isPrototypeLikeObject,
 } from './utils/others'
@@ -171,7 +173,7 @@ export default function encode(data: any, options?: EncodeOrUnevalOptions) {
             } else {
               type = Object.getPrototypeOf(v)
 
-              switch ((n = Object.prototype.toString.call(v).slice(8, -1))) {
+              switch ((n = getObjectName(v))) {
                 case 'Boolean':
                   if ((n = checkClasses(v, type, n)) === v) {
                     n = 'B' + +v
@@ -264,14 +266,23 @@ export default function encode(data: any, options?: EncodeOrUnevalOptions) {
                   if ((n = checkClasses(v, type, n)) === v) {
                     v.forEach(
                       function (this: number[], v: any, k: any) {
-                        const listValuesLength = listValues.length
-                        const listResultLength = listResult.length
-                        if (checkParsedKey((v = parse(v)))) {
-                          if (checkParsedKey((k = parse(k, 1)))) {
-                            this.push(k, v)
-                          } else {
-                            listValues.length = listValuesLength
-                            listResult.length = listResultLength
+                        if (
+                          fastCheckMapKey(
+                            k,
+                            prepareFunctions,
+                            prepareClasses,
+                            prepareErrors
+                          )
+                        ) {
+                          const listValuesLength = listValues.length
+                          const listResultLength = listResult.length
+                          if (checkParsedKey((v = parse(v)))) {
+                            if (checkParsedKey((k = parse(k, 1)))) {
+                              this.push(k, v)
+                            } else {
+                              listValues.length = listValuesLength
+                              listResult.length = listResultLength
+                            }
                           }
                         }
                       },

@@ -25,6 +25,10 @@ export function keyToNumMayBe(s: string) {
   return s !== __String__(n) ? s : n
 }
 
+export function getObjectName(obj: any) {
+  return Object.prototype.toString.call(obj).slice(8, -1)
+}
+
 let globalObject: any
 export function getGlobalThis() {
   if (!globalObject) {
@@ -77,4 +81,45 @@ export function checkIsCircularError(a: any, b: any) {
     console.error(a)
     throw 'Cyclepack: circular'
   }
+}
+
+export function fastCheckMapKey(
+  key: any,
+  prepareFunctions: any,
+  prepareClasses: any,
+  prepareErrors: any
+) {
+  if (key) {
+    let type: any = typeof key
+
+    if (
+      type === 'function' &&
+      (prepareFunctions == null || prepareFunctions(key) == null)
+    ) {
+      return false
+    }
+
+    if (type === 'object') {
+      if (
+        key instanceof Error &&
+        (prepareErrors === null ||
+          (prepareErrors && prepareErrors(key) === null))
+      ) {
+        return false
+      }
+
+      type = Object.getPrototypeOf(key)
+      if (
+        type &&
+        type !== Object.prototype &&
+        !isPrototypeLikeObject(type) &&
+        type !== getGlobalThis()[getObjectName(key)].prototype &&
+        (prepareClasses === null ||
+          (prepareClasses && prepareClasses(key) === null))
+      ) {
+        return false
+      }
+    }
+  }
+  return true
 }

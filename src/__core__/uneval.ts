@@ -2,10 +2,12 @@ import { EncodeOrUnevalOptions } from './types'
 import { stringEncode } from './utils/string'
 import {
   __String__ as String,
+  getObjectName,
   keyToNumMayBe,
   getGlobalThis,
   noopReturnTrue,
   noopReturnFirst,
+  fastCheckMapKey,
   checkIsCircularError,
   isPrototypeLikeObject,
 } from './utils/others'
@@ -221,7 +223,7 @@ function n(v){return new CyclepackClass[v]()}`
             } else {
               type = Object.getPrototypeOf(v)
 
-              switch ((n = Object.prototype.toString.call(v).slice(8, -1))) {
+              switch ((n = getObjectName(v))) {
                 case 'Boolean':
                   if ((n = checkClasses(v, type, n)) === v) {
                     n = `new Boolean(${+v})`
@@ -316,17 +318,26 @@ e&&(_.errors=e);s&&(_.stack=s);return _
                   if ((n = checkClasses(v, type, n)) === v) {
                     v.forEach(
                       function (this: any, v: any, k: any) {
-                        const listOriginLength = listOrigin.length
-                        const listValuesLength = listValues.length
-                        const listResultLength = listResult.length
-                        if (checkParsedKey((v = parse(v)))) {
-                          if (checkParsedKey((k = parse(k, 1)))) {
-                            this.b = 1
-                            listValues.push(`${this.i}.set(${k},${v})`)
-                          } else {
-                            listOrigin.length = listOriginLength
-                            listValues.length = listValuesLength
-                            listResult.length = listResultLength
+                        if (
+                          fastCheckMapKey(
+                            k,
+                            prepareFunctions,
+                            prepareClasses,
+                            prepareErrors
+                          )
+                        ) {
+                          const listOriginLength = listOrigin.length
+                          const listValuesLength = listValues.length
+                          const listResultLength = listResult.length
+                          if (checkParsedKey((v = parse(v)))) {
+                            if (checkParsedKey((k = parse(k, 1)))) {
+                              this.b = 1
+                              listValues.push(`${this.i}.set(${k},${v})`)
+                            } else {
+                              listOrigin.length = listOriginLength
+                              listValues.length = listValuesLength
+                              listResult.length = listResultLength
+                            }
                           }
                         }
                       },
