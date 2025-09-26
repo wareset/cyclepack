@@ -1,4 +1,4 @@
-import type { IEncodeOrUnevalOptions } from './types'
+import { EncodeOrUnevalOptions } from './types'
 import { stringEncode } from './utils/string'
 import {
   __String__ as String,
@@ -31,14 +31,14 @@ import {
 //   return s.join('')
 // }
 
-const globalForErrors = `var G="object";G=typeof globalThis===G?globalThis:typeof global===G?global:typeof window===G?window:typeof self===G?self:Function("return this")()||{}`
+const getGlobal = `var G="object";G=typeof globalThis===G?globalThis:typeof global===G?global:typeof window===G?window:typeof self===G?self:Function("return this")()||{}`
 
 function checkParsedKey(v: string) {
   return v !== 'void 0'
 }
 
 /*@__NO_SIDE_EFFECTS__*/
-export default function uneval(data: any, options?: IEncodeOrUnevalOptions) {
+export default function uneval(data: any, options?: EncodeOrUnevalOptions) {
   options || (options = {})
   const IS_NAN = {}
   const IS_NEG_ZERO = {}
@@ -59,21 +59,20 @@ export default function uneval(data: any, options?: IEncodeOrUnevalOptions) {
   const prepareErrors = options.prepareErrors
 
   let globalIsAdded = 0
-  let CLASSES: any
+  let CyclepackClass: any
   function createClass(type: string, short: string) {
-    globalIsAdded ||
-      (globalIsAdded = listClassesAndGlobal.push(globalForErrors))
+    globalIsAdded || (globalIsAdded = listClassesAndGlobal.push(getGlobal))
 
-    if (!CLASSES) {
-      CLASSES = {}
+    if (!CyclepackClass) {
+      CyclepackClass = {}
       listClassesAndGlobal.push(
-        `var CyclepackClass = G.CyclepackClass || (G.CyclepackClass = {})
-function c(f,v){Object.defineProperty(f.prototype,"_CyclepackClass",{value:v,enumerable:!1,configurable:!0,writable:!0})}
+        `var CyclepackClass=G.CyclepackClass||(G.CyclepackClass=Object.create(null))
+function c(f,v){Object.defineProperty(f.prototype,"_CyclepackClass",{value:v})}
 function n(v){return new CyclepackClass[v]()}`
       )
     }
-    if (!(type in CLASSES)) {
-      const escType = (CLASSES[type] = `"${stringEncode(type)}"`)
+    if (!(type in CyclepackClass)) {
+      const escType = (CyclepackClass[type] = `"${stringEncode(type)}"`)
       const className = `CyclepackClass[${escType}]`
       listClassesAndGlobal.push(
         `${className}||c(${className}=function(){},${escType})`
@@ -165,10 +164,10 @@ function n(v){return new CyclepackClass[v]()}`
         return n
       }
     : prepareClasses === null
-    ? function (v: any, type: any, funcName: string) {
-        return type !== global[funcName].prototype ? NaN : v
-      }
-    : noopReturnFirst
+      ? function (v: any, type: any, funcName: string) {
+          return type !== global[funcName].prototype ? NaN : v
+        }
+      : noopReturnFirst
 
   function parse(v: any, allowAll?: 1 | 0, setAllowAllDeep?: 1 | 0) {
     setAllowAllDeep && ++allowAllDeep
@@ -265,8 +264,7 @@ function n(v){return new CyclepackClass[v]()}`
                     n = NaN
                   } else if (n === void 0) {
                     globalIsAdded ||
-                      (globalIsAdded =
-                        listClassesAndGlobal.push(globalForErrors))
+                      (globalIsAdded = listClassesAndGlobal.push(getGlobal))
                     n = [
                       parse(String(v.constructor.name), 1),
                       parse(String(v.message), 1),
@@ -338,6 +336,13 @@ e&&(_.errors=e);s&&(_.stack=s);return _
                   }
                   break
 
+                // URL
+                case 'URL':
+                case 'URLSearchParams':
+                  if ((n = checkClasses(v, type, (type = n))) === v) {
+                    n = `new ${type}(${parse(String(v), 1)})`
+                  }
+                  break
                 // Typed Arrays
                 case 'DataView':
                 case 'Int8Array':
@@ -356,17 +361,11 @@ e&&(_.errors=e);s&&(_.stack=s);return _
                     n = `new ${type}(${parse(v.buffer, 1)})`
                   }
                   break
+
                 // Structured data
                 case 'ArrayBuffer':
                   if ((n = checkClasses(v, type, n)) === v) {
                     n = `(new Uint8Array([${new Uint8Array(v)}])).buffer`
-                  }
-                  break
-
-                case 'URL':
-                case 'URLSearchParams':
-                  if ((n = checkClasses(v, type, (type = n))) === v) {
-                    n = `new ${type}(${parse(String(v), 1)})`
                   }
                   break
 

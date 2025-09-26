@@ -6,7 +6,7 @@
 
 Из всех существующих решений найти подходящий инструмент не удалось.
 
-Например `devalue`, кажется самой лучшей, но:
+Например, `devalue` кажется самой лучшей, но:
 
 ```js
 // version 5.1.1
@@ -32,13 +32,13 @@ parse @ build.js:233
 */
 ```
 
-То есть, если при упаковке данных в них, даже случайно окажется `Symbol`, `devalue` упакует их без каких-либо предупреждений. Но, при попытке распаковать эти данные, всё упадёт.
+То есть, при упаковке данных, даже если случайно в них окажется `Symbol`, `devalue` упакует их без каких-либо предупреждений. Но, при попытке распаковать эти данные, всё упадёт.
 
 Именно поэтому и приходится писать собственные решения.
 
 ## Установка:
 
-На `npm` лежит первая версия `cyclepack`, написанная несколько лет назад и использовать её не стоит. Здесь сейчас лежит вторая версия, но она еще не добавлена на `npm` и поэтому, чтобы установить её с `github`, нужно прописать следующее в `package.json`:
+На `npm` лежит первая версия `cyclepack`, написанная несколько лет назад и использовать её не стоит. Здесь сейчас лежит вторая версия, но она еще не добавлена в `npm` и поэтому, чтобы установить её с `github`, нужно прописать следующее в `package.json`:
 
 package.json
 
@@ -104,6 +104,8 @@ v0[v8]=v7
 return v0
 })()
 */
+// Можно скопировать этот код и вставить
+// в консоль браузера, чтобы посмотреть результат.
 ```
 
 ## Инструкция:
@@ -111,7 +113,7 @@ return v0
 В `cyclepack` входят 3 функции `encode`, `decode` и `uneval`:
 
 ```typescript
-interface IEncodeOrUnevalOptions {
+type EncodeOrUnevalOptions = {
   filterByList?: any[]
   filterByFunction?: (Any) => boolean
 
@@ -123,19 +125,19 @@ interface IEncodeOrUnevalOptions {
   prepareErrors?: null | ((Error) => any)
 }
 
-function encode(data: any, options?: IEncodeOrUnevalOptions): string
-function uneval(data: any, options?: IEncodeOrUnevalOptions): string
+function encode(data: any, options?: EncodeOrUnevalOptions): string
+function uneval(data: any, options?: EncodeOrUnevalOptions): string
 
-interface IDecodeOptions {
-  prepareFunctions?: null | ((data) => any)
-  prepareClasses?: null | ((data) => any)
-  prepareErrors?: null | ((data) => any)
+type DecodeOptions = {
+  prepareFunctions?: null | ((Any) => any)
+  prepareClasses?: null | ((Any) => any)
+  prepareErrors?: null | ((Any) => any)
 }
 
-function decode(data: string, options?: IDecodeOptions): any
+function decode(data: string, options?: DecodeOptions): any
 ```
 
-Основная задача данной библиотеки - упаковать данные для передачи между сервером и клиентом, или создать готовые данные (через uneval) чтобы, например, вставить их в шаблон для SSR. Но часто не все данные нужны для передачи. Поэтому у функций есть опции, которые позволят подготовить все данные более правильно.
+Основная задача данной библиотеки - упаковать данные для передачи между сервером и клиентом, или создать готовые данные (через uneval) чтобы, например, вставить их в шаблон для SSR. Но часто не все данные нужны для передачи. Поэтому у функций есть опции, которые позволят подготовить данные перед упаковкой.
 
 ### Options: filterByList
 
@@ -201,7 +203,7 @@ return v0
 
 ### Options: filterByFunction
 
-Функция `filterByFunction` оставляет только те значения, при которых возвращает положительный результат (как `filter` у массива).
+Функция `filterByFunction` оставляет только те значения, при которых возвращает положительный результат (как метод `filter` у массивов).
 
 #### Например:
 
@@ -374,14 +376,16 @@ return v0
   */
 }
 
-// Значения '0' и 'NaN' были исключены через 'filterByList' и
+// Значения '0' и 'NaN' были исключены через 'filterByList'.
 // `cyclepack` рекурсивно исключал все условно пустые объекты.
 // В итоге в результат попал только главный объект со
 // свойством 'not_empty', которое равно '1'
-// а теперь удалим и его:
+// а теперь исключим и его:
 
 {
   const data = {
+    not_empty: 1,
+
     empty_object: { q: { w: -0 } },
     empty_array: [{}, [0, -0, NaN]],
     empty_Map: new Map([[1, {}]]),
@@ -389,7 +393,8 @@ return v0
   }
 
   const options = {
-    filterByList: [0, NaN],
+    // Добавим '1' в список исключений:
+    filterByList: [0, NaN, 1],
     removeEmptyObjects: true,
   }
 
@@ -408,8 +413,8 @@ return v0
   */
 }
 
-// Объект 'data', оказался полностью пустой и
-// поэтому был полностью убран. Это стоит иметь ввиду.
+// Объект 'data', оказался условно пустой полностью и
+// поэтому был полностью исключён. Это стоит иметь ввиду.
 ```
 
 ### Options: prepareFunctions
@@ -817,8 +822,8 @@ eval(forEval) == obj
 /*
 (function() {
 var G="object";G=typeof globalThis===G?globalThis:typeof global===G?global:typeof window===G?window:typeof self===G?self:Function("return this")()||{}
-var CyclepackClass = G.CyclepackClass || (G.CyclepackClass = {})
-function c(f,v){Object.defineProperty(f.prototype,"_CyclepackClass",{value:v,enumerable:!1,configurable:!0,writable:!0})}
+var CyclepackClass=G.CyclepackClass||(G.CyclepackClass=Object.create(null))
+function c(f,v){Object.defineProperty(f.prototype,"_CyclepackClass",{value:v})}
 function n(v){return new CyclepackClass[v]()}
 CyclepackClass["Vector2D"]||c(CyclepackClass["Vector2D"]=function(){},"Vector2D")
 var
@@ -837,7 +842,9 @@ v3[v5]=v4
 v3[v7]=v6
 v0[v9]=v3
 return v0
+})()
 */
+// Таким образом можно упаковать даже весь объект 'window'.
 ```
 
 ## Особенности упаковки javascript объектов и примитивов:

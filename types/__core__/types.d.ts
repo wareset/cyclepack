@@ -1,4 +1,4 @@
-export interface IEncodeOrUnevalOptions {
+export type EncodeOrUnevalOptions = {
     filterByList?: any[];
     filterByFunction?: (v: any) => boolean;
     removeArrayHoles?: boolean;
@@ -8,9 +8,9 @@ export interface IEncodeOrUnevalOptions {
         [k: string | number | symbol]: any;
     }) => any);
     prepareErrors?: null | ((er: Error) => any);
-}
-export interface IDecodeOptions {
+};
+export type DecodeOptions = {
     prepareFunctions?: null | ((data: any) => any);
     prepareClasses?: null | ((data: any) => any);
     prepareErrors?: null | ((data: any) => any);
-}
+};

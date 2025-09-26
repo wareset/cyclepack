@@ -1,15 +1,15 @@
-import type { IDecodeOptions } from './types'
+import { DecodeOptions } from './types'
 import { __String__ as String, getGlobalThis } from './utils/others'
 import { base64ToArrayBuffer } from './utils/base64'
 import { stringEncode, stringDecode } from './utils/string'
 
-let CLASSES: any
+let CyclepackClass: any
 function createClass(s: string) {
-  if (!CLASSES) {
-    getGlobalThis().CyclepackClass = CLASSES = {}
+  if (!CyclepackClass) {
+    getGlobalThis().CyclepackClass = CyclepackClass = Object.create(null)
   }
 
-  if (!(s in CLASSES)) {
+  if (!(s in CyclepackClass)) {
     let res: any
     try {
       res = Function(
@@ -18,15 +18,10 @@ function createClass(s: string) {
     } catch {
       res = function CyclepackClass(this: any) {}
     }
-    Object.defineProperty(res.prototype, '_CyclepackClass', {
-      configurable: true,
-      enumerable: false,
-      value: s,
-      writable: true,
-    })
-    CLASSES[s] = res
+    Object.defineProperty(res.prototype, '_CyclepackClass', { value: s })
+    CyclepackClass[s] = res
   }
-  return new CLASSES[s]()
+  return new CyclepackClass[s]()
 }
 
 function slice_1(s: string) {
@@ -37,7 +32,7 @@ function slice_1_and_split(s: string) {
 }
 
 /*@__NO_SIDE_EFFECTS__*/
-export default function decode(data: string, options?: IDecodeOptions) {
+export default function decode(data: string, options?: DecodeOptions) {
   let result!: any
   if (data && typeof data === 'string') {
     // код библиотечный, поэтому нечего переменной зря пропадать

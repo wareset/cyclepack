@@ -1,4 +1,4 @@
-import type { IEncodeOrUnevalOptions } from './types'
+import { EncodeOrUnevalOptions } from './types'
 import { stringEncode } from './utils/string'
 import { arrayBufferToBase64 } from './utils/base64'
 import {
@@ -16,7 +16,7 @@ function checkParsedKey(i: number) {
 }
 
 /*@__NO_SIDE_EFFECTS__*/
-export default function encode(data: any, options?: IEncodeOrUnevalOptions) {
+export default function encode(data: any, options?: EncodeOrUnevalOptions) {
   options || (options = {})
   const IS_NAN = {}
   const IS_NEG_ZERO = {}
@@ -282,6 +282,13 @@ export default function encode(data: any, options?: IEncodeOrUnevalOptions) {
                   }
                   break
 
+                // URL
+                case 'URL':
+                case 'URLSearchParams':
+                  if ((n = checkClasses(v, type, (type = n))) === v) {
+                    n = 'U' + parse(type, 1) + '_' + parse(String(v), 1)
+                  }
+                  break
                 // Typed Arrays
                 case 'DataView':
                 case 'Int8Array':
@@ -305,13 +312,6 @@ export default function encode(data: any, options?: IEncodeOrUnevalOptions) {
                 case 'ArrayBuffer':
                   if ((n = checkClasses(v, type, n)) === v) {
                     n = 'Y' + arrayBufferToBase64(v)
-                  }
-                  break
-
-                case 'URL':
-                case 'URLSearchParams':
-                  if ((n = checkClasses(v, type, (type = n))) === v) {
-                    n = 'U' + parse(type, 1) + '_' + parse(String(v), 1)
                   }
                   break
 

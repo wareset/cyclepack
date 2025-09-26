@@ -1,2 +1,2 @@
-import type { IDecodeOptions } from './types';
-export default function decode(data: string, options?: IDecodeOptions): any;
+import { DecodeOptions } from './types';
+export default function decode(data: string, options?: DecodeOptions): any;

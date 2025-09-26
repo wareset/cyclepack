@@ -1211,8 +1211,8 @@ return v0
       uneval: `
 (function() {
 var G="object";G=typeof globalThis===G?globalThis:typeof global===G?global:typeof window===G?window:typeof self===G?self:Function("return this")()||{}
-var CyclepackClass = G.CyclepackClass || (G.CyclepackClass = {})
-function c(f,v){Object.defineProperty(f.prototype,"_CyclepackClass",{value:v,enumerable:!1,configurable:!0,writable:!0})}
+var CyclepackClass=G.CyclepackClass||(G.CyclepackClass=Object.create(null))
+function c(f,v){Object.defineProperty(f.prototype,"_CyclepackClass",{value:v})}
 function n(v){return new CyclepackClass[v]()}
 CyclepackClass["CustomClass"]||c(CyclepackClass["CustomClass"]=function(){},"CustomClass")
 var
@@ -1237,8 +1237,8 @@ return v0
       uneval: `
 (function() {
 var G="object";G=typeof globalThis===G?globalThis:typeof global===G?global:typeof window===G?window:typeof self===G?self:Function("return this")()||{}
-var CyclepackClass = G.CyclepackClass || (G.CyclepackClass = {})
-function c(f,v){Object.defineProperty(f.prototype,"_CyclepackClass",{value:v,enumerable:!1,configurable:!0,writable:!0})}
+var CyclepackClass=G.CyclepackClass||(G.CyclepackClass=Object.create(null))
+function c(f,v){Object.defineProperty(f.prototype,"_CyclepackClass",{value:v})}
 function n(v){return new CyclepackClass[v]()}
 CyclepackClass["CustomClass"]||c(CyclepackClass["CustomClass"]=function(){},"CustomClass")
 CyclepackClass["CustomClass_2"]||c(CyclepackClass["CustomClass_2"]=function(){},"CustomClass_2")
@@ -1274,8 +1274,8 @@ return v0
       uneval: `
 (function() {
 var G="object";G=typeof globalThis===G?globalThis:typeof global===G?global:typeof window===G?window:typeof self===G?self:Function("return this")()||{}
-var CyclepackClass = G.CyclepackClass || (G.CyclepackClass = {})
-function c(f,v){Object.defineProperty(f.prototype,"_CyclepackClass",{value:v,enumerable:!1,configurable:!0,writable:!0})}
+var CyclepackClass=G.CyclepackClass||(G.CyclepackClass=Object.create(null))
+function c(f,v){Object.defineProperty(f.prototype,"_CyclepackClass",{value:v})}
 function n(v){return new CyclepackClass[v]()}
 CyclepackClass["CustomClass"]||c(CyclepackClass["CustomClass"]=function(){},"CustomClass")
 var
