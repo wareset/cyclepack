@@ -34,6 +34,8 @@ parse @ build.js:233
 
 То есть, при упаковке данных, даже если случайно в них окажется `Symbol`, `devalue` упакует их без каких-либо предупреждений. Но, при попытке распаковать эти данные, всё упадёт.
 
+Так же, все подобные библиотеки (включая `devalue`) собирают не все данные. Например, собирают не все ключи массива, но об этом будет отдельно в конце.
+
 Именно поэтому и приходится писать собственные решения.
 
 ## Установка:
@@ -105,7 +107,7 @@ return v0
 })()
 */
 // Можно скопировать этот код и вставить
-// в консоль браузера, чтобы посмотреть результат.
+// в консоль браузера, чтобы увидеть результат.
 ```
 
 ## Инструкция:
@@ -129,15 +131,15 @@ function encode(data: any, options?: EncodeOrUnevalOptions): string
 function uneval(data: any, options?: EncodeOrUnevalOptions): string
 
 type DecodeOptions = {
-  prepareFunctions?: null | ((Any) => any)
-  prepareClasses?: null | ((Any) => any)
-  prepareErrors?: null | ((Any) => any)
+  prepareFunctions?: (Any) => any
+  prepareClasses?: (Any) => any
+  prepareErrors?: (Any) => any
 }
 
 function decode(data: string, options?: DecodeOptions): any
 ```
 
-Основная задача данной библиотеки - упаковать данные для передачи между сервером и клиентом, или создать готовые данные (через uneval) чтобы, например, вставить их в шаблон для SSR. Но часто не все данные нужны для передачи. Поэтому у функций есть опции, которые позволят подготовить данные перед упаковкой.
+Основная задача данной библиотеки - упаковать данные для передачи между сервером и клиентом, или создать готовые данные (через uneval) чтобы, например, вставить их в код страницы для SSR. Но часто не все данные нужны для передачи. Поэтому у функций есть опции, которые позволят подготовить данные перед упаковкой.
 
 ### Options: filterByList
 
@@ -203,7 +205,7 @@ return v0
 
 ### Options: filterByFunction
 
-Функция `filterByFunction` оставляет только те значения, при которых возвращает положительный результат (как метод `filter` у массивов).
+Функция `filterByFunction` оставляет только те значения, при которых возвращает положительный результат (как метод `filter` у массива).
 
 #### Например:
 
@@ -283,7 +285,7 @@ const data = new Map([
 ])
 
 const options = {
-  // Это осталось с прошлого примера:
+  // Оставим это с прошлого примера:
   filterByList: [null, 0, NaN],
   // Уберём "дыры" из массивов:
   removeArrayHoles: true,
@@ -337,18 +339,18 @@ return v0
 ```js
 import * as cyclepack from 'cyclepack'
 
+const data = {
+  not_empty: 1,
+
+  empty_object: { q: { w: -0 } },
+  empty_array: [{}, [0, -0, NaN]],
+  empty_Map: new Map([[1, {}]]),
+  empty_Set: new Set([{}, [NaN]]),
+}
+
 {
-  const data = {
-    not_empty: 1,
-
-    empty_object: { q: { w: -0 } },
-    empty_array: [{}, [0, -0, NaN]],
-    empty_Map: new Map([[1, {}]]),
-    empty_Set: new Set([{}, [NaN]]),
-  }
-
   const options = {
-    // Это осталось с прошлого примера:
+    // Оставим это с прошлого примера:
     filterByList: [0, NaN],
     // Исключим все пустые объекты:
     removeEmptyObjects: true,
@@ -377,21 +379,12 @@ return v0
 }
 
 // Значения '0' и 'NaN' были исключены через 'filterByList'.
-// `cyclepack` рекурсивно исключал все условно пустые объекты.
+// `cyclepack` рекурсивно исключил все условно пустые объекты.
 // В итоге в результат попал только главный объект со
 // свойством 'not_empty', которое равно '1'
 // а теперь исключим и его:
 
 {
-  const data = {
-    not_empty: 1,
-
-    empty_object: { q: { w: -0 } },
-    empty_array: [{}, [0, -0, NaN]],
-    empty_Map: new Map([[1, {}]]),
-    empty_Set: new Set([{}, [NaN]]),
-  }
-
   const options = {
     // Добавим '1' в список исключений:
     filterByList: [0, NaN, 1],
@@ -409,11 +402,11 @@ return v0
   // Результат:
   eval(forEval) == obj
   /*
-  void 0
+void 0
   */
 }
 
-// Объект 'data', оказался условно пустой полностью и
+// Объект 'data', оказался полностью условно пустой и
 // поэтому был полностью исключён. Это стоит иметь ввиду.
 ```
 
@@ -603,6 +596,13 @@ return v0
 ```js
 import * as cyclepack from 'cyclepack'
 
+const options = {
+  // Эти опции полностью эквивалентны
+  // и любой нестандартный объект будет исключён:
+  prepareClasses: null,
+  prepareClasses: () => null,
+}
+
 class CustomClass {}
 class CustomArray extends Array {}
 
@@ -611,13 +611,6 @@ const data = {
   map: new Map([[new CustomClass(), 999]]),
   customClass: new CustomClass(),
   customArray: new CustomArray(42),
-}
-
-const options = {
-  // Эти опции полностью эквивалентны
-  // и любой нестандартный объект будет исключён:
-  prepareClasses: null,
-  prepareClasses: () => null,
 }
 
 const str = cyclepack.encode(data, options)
@@ -665,12 +658,14 @@ class Vector2D {
   }
 }
 
-const data = { vec: new Vector2D(21, 42) }
+const data = {
+  vec: new Vector2D(21, 42),
+}
 
 // Пример опций для 'encode'/'decode':
 {
   const optionsForEncode = {
-    // укажем для примера:
+    // Укажем для примера:
     filterByFunction: (v) => typeof v !== 'string',
     // Подготовим класс к упаковке.
     // Используем самый простой способ, чтобы была понятна суть:
@@ -772,6 +767,14 @@ return v0
 ```js
 import * as cyclepack from 'cyclepack'
 
+const options = {
+  // Эти опции полностью эквивалентны и любой
+  // нестандартный объект будет упакован автоматически:
+  prepareClasses: void 0,
+  prepareClasses: () => void 0,
+  prepareClasses: (obj) => obj,
+}
+
 class CustomArray extends Array {}
 
 class Vector2D {
@@ -784,14 +787,6 @@ class Vector2D {
 const data = {
   arr: new CustomArray(42),
   vec: new Vector2D(21, 42),
-}
-
-const options = {
-  // Эти опции полностью эквивалентны и любой
-  // нестандартный объект будет упакован автоматически:
-  prepareClasses: void 0,
-  prepareClasses: () => void 0,
-  prepareClasses: (obj) => obj,
 }
 
 const str = data.encode(data, options)
@@ -849,6 +844,272 @@ return v0
 // Таким образом можно упаковать даже весь объект 'window'.
 ```
 
+### Options: prepareErrors
+
+Функция `prepareErrors` используется для подготовки объектов ошибок к упаковке/распаковке (`encode`/`decode`) или передаче к исполнению (`uneval`).
+
+Создание собственных классов ошибок очень частая практика без которой не обходится ни один большой проект. Поэтому их обработка вынесена в отдельную функцию `prepareErrors`.
+
+В `prepareErrors` возвращаемые значения `void 0` и `null` ведут себя по разному.
+
+#### Пример, где `prepareErrors` равна `null`:
+
+```js
+import * as cyclepack from 'cyclepack'
+
+const options = {
+  // Эти опции полностью эквивалентны
+  // и любой объект ошибки будет исключён:
+  prepareErrors: null,
+  prepareErrors: () => null,
+}
+
+class CustomError extends Error {}
+
+const data = {
+  map: new Map([[new Error(''), 1]]),
+  typeError: new TypeError('Hello'),
+  customError: new CustomError('world'),
+}
+
+const str = cyclepack.encode(data, options)
+// O1_2:1·M·tmap
+
+const obj = cyclepack.decode(str)
+// Результат:
+// Все объекты ошибки были исключены
+obj == { map: new Map([]) }
+
+const forEval = cyclepack.uneval(data, options)
+// Результат:
+eval(forEval) == obj
+/*
+(function() {
+var
+v1=new Map(),
+v2="map",
+v0={}
+v0[v2]=v1
+return v0
+})()
+*/
+```
+
+#### Используем `prepareErrors`:
+
+```js
+import * as cyclepack from 'cyclepack'
+
+class CustomError extends Error {}
+
+const data = {
+  err_1: new TypeError('mes_1', { cause: 123 }),
+  err_2: new CustomError('mes_2', { cause: 456 }),
+}
+
+// Пример опций для 'encode'/'decode':
+{
+  const optionsForEncode = {
+    // Укажем для примера:
+    filterByFunction: (v) => typeof v !== 'string',
+    // Подготовим объекты ошибок к упаковке.
+    // Используем самый простой способ, чтобы была понятна суть:
+    prepareErrors: (err) => {
+      return [err.constructor.name, err.message, err.cause]
+    },
+  }
+
+  const str = cyclepack.encode(data, optionsForEncode)
+  // O1_6:1,12:7·E2·A3_3,4,5·tTypeError·tmes_1·123·terr_1·E8·A3_9,10,11·tCustomError·tmes_2·456·terr_2
+
+  const obj_1 = cyclepack.decode(str)
+  // Результат:
+  // Опция 'filterByFunction' никак не влияет на возвращаемые
+  // значения 'prepareErrors' и не удаляет строку из массива
+  obj_1 ==
+    {
+      err_1: ['TypeError', 'mes_1', 123],
+      err_2: ['CustomError', 'mes_2', 456],
+    }
+
+  /*
+  Восстановим объект класса Vector2D:
+  */
+
+  const optionsForDecode = {
+    prepareErrors: (arr) => {
+      return new Error(arr[0] + ': ' + arr[1], { cause: arr[2] })
+    },
+  }
+
+  const obj_2 = cyclepack.decode(str, optionsForDecode)
+  // Результат:
+  obj_2 ==
+    {
+      err_1: new Error('TypeError: mes_1', { cause: 123 }),
+      err_2: new Error('CustomError: mes_2', { cause: 456 }),
+    }
+}
+
+// Пример опций для 'uneval':
+{
+  // Пример номер 1
+
+  const optionsForUneval_1 = {
+    // Если возвращается не строка, то возвращаемое значение будет
+    // упаковано, но без модификаций ('filterByList' и так далее):
+    prepareErrors: (err) => {
+      return [err.constructor.name, err.message]
+    },
+  }
+
+  const forEval_1 = cyclepack.uneval(data, optionsForUneval_1)
+  // Результат:
+  eval(forEval_1) ==
+    {
+      err_1: ['TypeError', 'mes_1'],
+      err_2: ['CustomError', 'mes_2'],
+    }
+  /*
+(function() {
+var
+v3="TypeError",
+v4="mes_1",
+v2=Array(2),
+v1=v2,
+v5="err_1",
+v8="CustomError",
+v9="mes_2",
+v7=Array(2),
+v6=v7,
+v10="err_2",
+v0={}
+v2[0]=v3
+v2[1]=v4
+v0[v5]=v1
+v7[0]=v8
+v7[1]=v9
+v0[v10]=v6
+return v0
+})()
+  */
+
+  // Пример номер 2
+
+  const optionsForUneval_2 = {
+    // Если возвращается строка, то она встраивается в
+    // финальный результат как есть, без каки-либо изменений.
+    // Нужно иметь это ввиду и помнить об XSS уязвимостях:
+    prepareErrors: (err) => {
+      return `new Error(${JSON.stringify(
+        err.constructor.name + ': ' + err.message
+      )})`
+    },
+  }
+
+  const forEval_2 = cyclepack.uneval(data, optionsForUneval_2)
+  // Результат:
+  eval(forEval_2) ==
+    {
+      err_1: new Error('TypeError: mes_1'),
+      err_2: new Error('CustomError: mes_2'),
+    }
+  /*
+(function() {
+var
+v1=new Error("TypeError: mes_1"),
+v2="err_1",
+v3=new Error("CustomError: mes_2"),
+v4="err_2",
+v0={}
+v0[v2]=v1
+v0[v4]=v3
+return v0
+})()
+  */
+}
+```
+
+#### Пример, где `prepareErrors` равна `void 0`:
+
+```js
+import * as cyclepack from 'cyclepack'
+
+const options = {
+  // Эти опции полностью эквивалентны и любой
+  // объект ошибки будет упакован автоматически:
+  prepareErrors: void 0,
+  prepareErrors: () => void 0,
+  prepareErrors: (err) => err,
+}
+
+class CustomError extends Error {}
+
+const data = {
+  err_1: new AggregateError([1, 2], 'Hello'),
+  err_2: new CustomError('world'),
+}
+
+const str = data.encode(data, options)
+// O1_8:1,13:9·E2_3__4_5·tAggregateError·tHello·tAggregateError: Hello\n    at http://localhost:3000/js/build.js:23:12\n    at http://localhost:3000/js/build.js:35:3·A2_6,7·1·2·terr_1·E10_11__12·tCustomError·tworld·tError: world\n    at http://localhost:3000/js/build.js:24:12\n    at http://localhost:3000/js/build.js:35:3·terr_2
+
+const obj = data.decode(str)
+// Результат:
+// `cyclepack` сохраняет 'message', 'cause', 'stack' и 'errors',
+// который есть у 'AggregateError'. И пытается восстановить
+// объект ошибки максимально идентично оригиналу.
+// Но если это невозможно, то он создаёт стандартную
+// ошибку и добавляет ей свойство '_CyclepackError' с названием
+// класса оригинальной ошибки
+obj ==
+  {
+    err_1: new AggregateError([1, 2], 'Hello'),
+    err_2: (() => {
+      const res = new Error('world')
+      res._CyclepackError = 'CustomError'
+      return res
+    })(),
+  }
+
+const forEval = cyclepack.uneval(data)
+// Результат:
+eval(forEval) == obj
+/*
+(function() {
+var G="object";G=typeof globalThis===G?globalThis:typeof global===G?global:typeof window===G?window:typeof self===G?self:Function("return this")()||{}
+var
+v2="AggregateError",
+v3="Hello",
+v4="AggregateError: Hello\n    at http://localhost:3000/js/build.js:23:12\n    at http://localhost:3000/js/build.js:35:3",
+v6=1,
+v7=2,
+v5=Array(2),
+v1=(function(f,m,c,s,e){
+var _,F=G[f]
+try{_= e?(new F([],m,c)):(new F(m,c))}catch{_=new Error(m,c);_._CyclepackError=f}
+s&&(_.stack=s);e&&(_.errors=e);return _
+})(v2,v3,{},v4,v5),
+v8="err_1",
+v10="CustomError",
+v11="world",
+v12="Error: world\n    at http://localhost:3000/js/build.js:24:12\n    at http://localhost:3000/js/build.js:35:3",
+v9=(function(f,m,c,s,e){
+var _,F=G[f]
+try{_= e?(new F([],m,c)):(new F(m,c))}catch{_=new Error(m,c);_._CyclepackError=f}
+s&&(_.stack=s);e&&(_.errors=e);return _
+})(v10,v11,{},v12,0),
+v13="err_2",
+v0={}
+v5[0]=v6
+v5[1]=v7
+v0[v8]=v1
+v0[v13]=v9
+return v0
+})()
+*/
+// Таким образом можно упаковать даже весь объект 'window'.
+```
+
 ## Особенности упаковки javascript объектов и примитивов:
 
 Полный список того, что упаковывается:
@@ -869,7 +1130,7 @@ return v0
   - RegExp
   - Date
   - Array
-  - Object
+  - Object (включая классы и 'prepareClasses')
   - Set
   - Map
   - URL
@@ -955,9 +1216,9 @@ import * as cyclepack from 'cyclepack'
 
 #### Специфика Map
 
-У `Map` ключом может быть всё что угодно, поэтому перед проверкой значения сначала идёт быстрая проверка ключа: является ли он функцией, объектом ошибки или нестандартным классовым объектом и, если является, то проверяется можно ли упаковывать его в принципе.
+У `Map` ключом может быть всё что угодно, поэтому перед проверкой значения сначала идёт быстрая проверка ключа: является ли он функцией, объектом ошибки или нестандартным классовым объектом и, если является то проверяется на возможность его упаковки в принципе.
 
-После проверки и упаковки значения, начинается упаковка ключа и он не будет исключён опциями `filterByList`, `filterByFunction` и `removeEmptyObjects`, но может быть модифицирован ими, как и опцией `removeArrayHoles`.
+После проверки и упаковки значения, начинается упаковка ключа и он не будет исключён опциями `filterByList`, `filterByFunction` и `removeEmptyObjects`, но может быть модифицирован ими, а так же опцией `removeArrayHoles`.
 
 ```js
 import * as cyclepack from 'cyclepack'
@@ -990,7 +1251,7 @@ const data = new Map([
   // Останется, так как значение '5' не может
   // остаться без ключа, но объект станет пустым
   [{ q: [0, NaN] }, 5],
-  // Будет исключена по 'filterByList' и 'removeEmptyObjects'
+  // Исчезнет из-за 'filterByList' и 'removeEmptyObjects'
   [6, { q: [0, NaN] }],
 ])
 
