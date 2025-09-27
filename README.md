@@ -530,6 +530,7 @@ const data = {
   fn_2: () => {},
 }
 
+// Пример 1
 {
   const optionsForUneval = {
     // Укажем для примера:
@@ -559,6 +560,7 @@ return v0
   */
 }
 
+// Пример 2
 {
   const optionsForEncode = {
     // Если возвращается строка, то она будет помещена
