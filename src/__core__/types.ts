@@ -9,7 +9,7 @@ export type EncodeOrUnevalOptions = {
 }
 
 export type DecodeOptions = {
-  prepareFunctions?: null | ((data: any) => any)
-  prepareClasses?: null | ((data: any) => any)
-  prepareErrors?: null | ((data: any) => any)
+  prepareFunctions?: (data: any) => any
+  prepareClasses?: (data: any) => any
+  prepareErrors?: (data: any) => any
 }

@@ -268,14 +268,14 @@ function n(v){return new CyclepackClass[v]()}`
                     n = [
                       parse(String(v.constructor.name), 1),
                       parse(String(v.message), 1),
+                      'cause' in v ? `{cause:${parse(v.cause, 1)}}` : '{}',
                       v.stack ? parse(v.stack, 1) : 0,
                       v.errors ? parse(v.errors, 1) : 0,
-                      'cause' in v ? `{cause:${parse(v.cause, 1)}}` : '{}',
                     ]
-                    n = `(function(f,m,s,e,c){
+                    n = `(function(f,m,c,s,e){
 var _,F=G[f]
 try{_= e?(new F([],m,c)):(new F(m,c))}catch{_=new Error(m,c);_._CyclepackError=f}
-e&&(_.errors=e);s&&(_.stack=s);return _
+s&&(_.stack=s);e&&(_.errors=e);return _
 })(${n})`
                   } else if (typeof n !== 'string') {
                     n = parse(n, 1, 1)
