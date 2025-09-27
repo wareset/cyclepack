@@ -82,39 +82,30 @@ export function fastCheckMapKey(
   prepareClasses: any,
   prepareErrors: any
 ) {
+  let res: any = true
   if (key) {
     switch (typeof key) {
       case 'function':
-        if (
-          prepareFunctions == null ||
-          key === (key = prepareFunctions(key)) ||
-          key == null
-        ) {
-          return false
-        }
+        res = prepareFunctions && prepareFunctions(key)
+        res = res != null && res !== key
         break
       case 'object':
         if (key instanceof Error) {
-          if (
-            prepareErrors === null ||
-            (prepareErrors && prepareErrors(key) === null)
-          ) {
-            return false
-          }
+          res = prepareErrors && prepareErrors(key)
+          res = res !== null
         } else {
           const proto = Object.getPrototypeOf(key)
           if (
             proto &&
             proto !== Object.prototype &&
             !isPrototypeLikeObject(proto) &&
-            proto !== getGlobalThis()[getObjectName(key)].prototype &&
-            (prepareClasses === null ||
-              (prepareClasses && prepareClasses(key) === null))
+            proto !== getGlobalThis()[getObjectName(key)].prototype
           ) {
-            return false
+            res = prepareClasses && prepareClasses(key)
+            res = res !== null
           }
         }
     }
   }
-  return true
+  return res
 }
