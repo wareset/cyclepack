@@ -47,7 +47,7 @@ package.json
 ```json
 {
   "dependencies": {
-    "cyclepack": "wareset/cyclepack"
+    "cyclepack": "github:wareset/cyclepack"
   }
 }
 ```
