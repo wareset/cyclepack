@@ -188,8 +188,9 @@ export default function decode(data: string, options?: DecodeOptions) {
               // BigUint64Array
               case 'U':
                 v = slice_1_and_split(v)
-                s = new global[parse(v[0])](parse(v[1]))
-                // s = s ? new s(parse(v[1])) : parse(v[1])
+                if ((s = parse(v[0])) && (s = global[s])) {
+                  s = new s(parse(v[1]))
+                }
                 break
               // ArrayBuffer
               case 'Y':
@@ -216,8 +217,10 @@ export default function decode(data: string, options?: DecodeOptions) {
                 break
               // User Class
               case 'C':
-                s = parse(slice_1(v))
-                prepareClasses && (s = prepareClasses(s))
+                if ((v = slice_1(v))) {
+                  s = parse(v)
+                  prepareClasses && (s = prepareClasses(s))
+                }
                 break
             }
 
