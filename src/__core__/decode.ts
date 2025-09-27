@@ -188,7 +188,7 @@ export default function decode(data: string, options?: DecodeOptions) {
               // BigUint64Array
               case 'U':
                 v = slice_1_and_split(v)
-                if ((s = parse(v[0])) && (s = global[s])) {
+                if ((s = global[parse(v[0])])) {
                   s = new s(parse(v[1]))
                 }
                 break
