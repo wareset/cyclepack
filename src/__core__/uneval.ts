@@ -9,6 +9,7 @@ import {
   noopReturnFirst,
   fastCheckMapKey,
   isPrototypeLikeObject,
+  ALLOWED_ERRORS,
 } from './utils/others'
 
 // function setId(num: number): string {
@@ -31,8 +32,6 @@ import {
 //   }
 //   return s.join('')
 // }
-
-const getGlobal = `var G="object";G=typeof globalThis===G?globalThis:typeof global===G?global:typeof window===G?window:typeof self===G?self:Function("return this")()||{}`
 
 function checkParsedKey(v: string) {
   return v !== 'void 0'
@@ -59,15 +58,13 @@ export default function uneval(data: any, options?: EncodeOrUnevalOptions) {
   const prepareClasses = options.prepareClasses
   const prepareErrors = options.prepareErrors
 
-  let globalIsAdded = 0
   let CyclepackClass: any
   function createClass(type: string, short: string) {
-    globalIsAdded || (globalIsAdded = listClassesAndGlobal.push(getGlobal))
-
     if (!CyclepackClass) {
       CyclepackClass = {}
       listClassesAndGlobal.push(
-        `var CyclepackClass=G.CyclepackClass||(G.CyclepackClass=Object.create(null))
+        `var G="object";G=typeof globalThis===G?globalThis:typeof global===G?global:typeof window===G?window:typeof self===G?self:Function("return this")()||{}
+var CyclepackClass=G.CyclepackClass||(G.CyclepackClass=Object.create(null))
 function c(f,v){Object.defineProperty(f.prototype,"_CyclepackClass",{value:v})}
 function n(v){return new CyclepackClass[v]()}`
       )
@@ -251,7 +248,8 @@ function n(v){return new CyclepackClass[v]()}`
                   break
 
                 // Errors
-                // case 'AggregateError':
+                // case 'SuppressedError': // not support
+                // case 'AggregateError': // not support
                 // case 'EvalError':
                 // case 'RangeError':
                 // case 'ReferenceError':
@@ -263,20 +261,15 @@ function n(v){return new CyclepackClass[v]()}`
                   if (n === null) {
                     n = NaN
                   } else if (n === void 0 || n === v) {
-                    globalIsAdded ||
-                      (globalIsAdded = listClassesAndGlobal.push(getGlobal))
-                    n = [
-                      parse(String(v.constructor.name), 1),
-                      parse(String(v.message), 1),
-                      'cause' in v ? `{cause:${parse(v.cause, 1)}}` : '{}',
-                      v.stack ? parse(v.stack, 1) : 0,
-                      v.errors ? parse(v.errors, 1) : 0,
-                    ]
-                    n = `(function(f,m,c,s,e){
-var _,F=G[f]
-try{_= e?(new F([],m,c)):(new F(m,c))}catch{_=new Error(m,c);_._CyclepackError=f}
-s&&(_.stack=s);e&&(_.errors=e);return _
-})(${n})`
+                    n = `new ${type.name in ALLOWED_ERRORS ? type.name : 'Error'}(${'cause' in v ? `"",{cause:1}` : '""'})`
+                    v.message === '' ||
+                      listValues.push(`${idx}.message=${parse(v.message, 1)}`)
+                    'cause' in v &&
+                      listValues.push(`${idx}.cause=${parse(v.cause, 1)}`)
+                    'stack' in v &&
+                      listValues.push(`${idx}.stack=${parse(v.stack, 1)}`)
+                    v.name in ALLOWED_ERRORS ||
+                      listValues.push(`${idx}.name=${parse(v.name, 1)}`)
                   } else if (typeof n !== 'string') {
                     n = parse(n, 1, 1)
                   }

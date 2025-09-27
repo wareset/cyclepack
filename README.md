@@ -473,7 +473,7 @@ const data = {
 }
 
 const optionsForEncode = {
-  // укажем для примера:
+  // Укажем для примера:
   filterByFunction: (v) => typeof v !== 'string',
   // Подготовим функцию к упаковке.
   // Используем самый простой способ, чтобы была понятна суть:
@@ -532,7 +532,7 @@ const data = {
 
 {
   const optionsForUneval = {
-    // укажем для примера:
+    // Укажем для примера:
     filterByFunction: (v) => typeof v !== 'string',
     // Если возвращается не строка, то значение будет упаковано,
     // но без каких-либо модификаций (типа 'filterByFunction'):
@@ -813,7 +813,7 @@ obj ==
     })(),
   }
 
-const forEval = cyclepack.uneval(data)
+const forEval = cyclepack.uneval(data, options)
 // Результат:
 eval(forEval) == obj
 /*
@@ -925,7 +925,7 @@ const data = {
   const obj_1 = cyclepack.decode(str)
   // Результат:
   // Опция 'filterByFunction' никак не влияет на возвращаемые
-  // значения 'prepareErrors' и не удаляет строку из массива
+  // значения 'prepareErrors' и не удаляет строки из массивов
   obj_1 ==
     {
       err_1: ['TypeError', 'mes_1', 123],
@@ -933,7 +933,7 @@ const data = {
     }
 
   /*
-  Восстановим объект класса Vector2D:
+  Создадим собственные объекты ошибок:
   */
 
   const optionsForDecode = {
@@ -1032,6 +1032,18 @@ return v0
 
 #### Пример, где `prepareErrors` равна `void 0`:
 
+`cyclepack` умеет автоматически упаковывать следующие типы объектов ошибок:
+
+- Error
+- EvalError
+- RangeError
+- ReferenceError
+- SyntaxError
+- TypeError
+- URIError
+
+Если объект ошибки какой-либо другой, `cyclepack` в любом случае сохранит из него `name`, `message`, `cause` и `stack`.
+
 ```js
 import * as cyclepack from 'cyclepack'
 
@@ -1043,71 +1055,77 @@ const options = {
   prepareErrors: (err) => err,
 }
 
-class CustomError extends Error {}
+class CustomError extends TypeError {
+  name = 'CustomSuperError'
+}
 
 const data = {
-  err_1: new AggregateError([1, 2], 'Hello'),
-  err_2: new CustomError('world'),
+  err_1: new RangeError('Hello', { cause: 1 }),
+  err_2: new CustomError('world', { cause: 2 }),
+  err_3: new AggregateError([1, 2], '!!!'),
 }
 
 const str = data.encode(data, options)
-// O1_8:1,13:9·E2_3__4_5·tAggregateError·tHello·tAggregateError: Hello\n    at http://localhost:3000/js/build.js:23:12\n    at http://localhost:3000/js/build.js:35:3·A2_6,7·1·2·terr_1·E10_11__12·tCustomError·tworld·tError: world\n    at http://localhost:3000/js/build.js:24:12\n    at http://localhost:3000/js/build.js:35:3·terr_2
+// O1_6:1,13:7,18:14·E2_3_4_5_·tRangeError·tHello·1·tRangeError: Hello\n    at http://localhost:3000/js/build.js:25:12\n    at http://localhost:3000/js/build.js:41:3·terr_1·E8_9_10_11_12·tTypeError·tworld·2·tCustomSuperError: world\n    at http://localhost:3000/js/build.js:26:12\n    at http://localhost:3000/js/build.js:41:3·tCustomSuperError·terr_2·E_15__16_17·t!!!·tAggregateError: !!!\n    at http://localhost:3000/js/build.js:27:12\n    at http://localhost:3000/js/build.js:41:3·tAggregateError·terr_3
 
 const obj = data.decode(str)
 // Результат:
-// `cyclepack` сохраняет 'message', 'cause', 'stack' и 'errors',
-// который есть у 'AggregateError'. И пытается восстановить
-// объект ошибки максимально идентично оригиналу.
-// Но если это невозможно, то он создаёт стандартную
-// ошибку и добавляет ей свойство '_CyclepackError' с названием
-// класса оригинальной ошибки
+// `cyclepack` сохраняет 'name', 'message', 'cause' и 'stack',
+// и пытается восстановить объект ошибки идентично оригиналу.
 obj ==
   {
-    err_1: new AggregateError([1, 2], 'Hello'),
+    err_1: new RangeError('Hello', { cause: 1 }),
     err_2: (() => {
-      const res = new Error('world')
-      res._CyclepackError = 'CustomError'
+      const res = new TypeError('world', { cause: 2 })
+      res.name = 'CustomSuperError'
+      return res
+    })(),
+    err_3: (() => {
+      const res = new Error('!!!')
+      res.name = 'AggregateError'
       return res
     })(),
   }
 
-const forEval = cyclepack.uneval(data)
+const forEval = cyclepack.uneval(data, options)
 // Результат:
 eval(forEval) == obj
 /*
 (function() {
-var G="object";G=typeof globalThis===G?globalThis:typeof global===G?global:typeof window===G?window:typeof self===G?self:Function("return this")()||{}
 var
-v2="AggregateError",
-v3="Hello",
-v4="AggregateError: Hello\n    at http://localhost:3000/js/build.js:23:12\n    at http://localhost:3000/js/build.js:35:3",
-v6=1,
-v7=2,
-v5=Array(2),
-v1=(function(f,m,c,s,e){
-var _,F=G[f]
-try{_= e?(new F([],m,c)):(new F(m,c))}catch{_=new Error(m,c);_._CyclepackError=f}
-s&&(_.stack=s);e&&(_.errors=e);return _
-})(v2,v3,{},v4,v5),
-v8="err_1",
-v10="CustomError",
-v11="world",
-v12="Error: world\n    at http://localhost:3000/js/build.js:24:12\n    at http://localhost:3000/js/build.js:35:3",
-v9=(function(f,m,c,s,e){
-var _,F=G[f]
-try{_= e?(new F([],m,c)):(new F(m,c))}catch{_=new Error(m,c);_._CyclepackError=f}
-s&&(_.stack=s);e&&(_.errors=e);return _
-})(v10,v11,{},v12,0),
-v13="err_2",
+v2="Hello",
+v3=1,
+v4="RangeError: Hello\n    at http://localhost:3000/js/build.js:25:12\n    at http://localhost:3000/js/build.js:41:3",
+v1=new RangeError("",{cause:1}),
+v5="err_1",
+v7="world",
+v8=2,
+v9="CustomSuperError: world\n    at http://localhost:3000/js/build.js:26:12\n    at http://localhost:3000/js/build.js:41:3",
+v10="CustomSuperError",
+v6=new TypeError("",{cause:1}),
+v11="err_2",
+v13="!!!",
+v14="AggregateError: !!!\n    at http://localhost:3000/js/build.js:27:12\n    at http://localhost:3000/js/build.js:41:3",
+v15="AggregateError",
+v12=new Error(""),
+v16="err_3",
 v0={}
-v5[0]=v6
-v5[1]=v7
-v0[v8]=v1
-v0[v13]=v9
+v1.message=v2
+v1.cause=v3
+v1.stack=v4
+v0[v5]=v1
+v6.message=v7
+v6.cause=v8
+v6.stack=v9
+v6.name=v10
+v0[v11]=v6
+v12.message=v13
+v12.stack=v14
+v12.name=v15
+v0[v16]=v12
 return v0
 })()
 */
-// Таким образом можно упаковать даже весь объект 'window'.
 ```
 
 ## Особенности упаковки javascript объектов и примитивов:
@@ -1152,7 +1170,6 @@ return v0
   - Float64Array
 - Объекты ошибок (включая 'prepareErrors'):
   - Error
-  - AggregateError
   - EvalError
   - RangeError
   - ReferenceError
@@ -1267,7 +1284,7 @@ obj ==
     [{}, 5],
   ])
 
-const forEval = cyclepack.uneval(data)
+const forEval = cyclepack.uneval(data, options)
 // Результат:
 eval(forEval) == obj
 /*

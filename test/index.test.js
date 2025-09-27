@@ -944,9 +944,6 @@ return v0
 })
 
 test('Options: prepareErrors', function () {
-  class CustomError1 extends Error {}
-  globalThis.CustomError1 = CustomError1
-
   const stack = 'Error\n    at http://localhost:3000/js/build.js:17:17'
 
   const fixtures = [
@@ -989,47 +986,36 @@ return v0
       })(),
       prepareErrors: void 0,
       encode:
-        'E1_2__3·tReferenceError·t·tError\\n    at http://localhost:3000/js/build.js:17:17',
+        'E1___2_·tReferenceError·tError\\n    at http://localhost:3000/js/build.js:17:17',
       uneval: `
 (function() {
-var G="object";G=typeof globalThis===G?globalThis:typeof global===G?global:typeof window===G?window:typeof self===G?self:Function("return this")()||{}
 var
-v1="ReferenceError",
-v2="",
-v3="Error\\n    at http://localhost:3000/js/build.js:17:17",
-v0=(function(f,m,c,s,e){
-var _,F=G[f]
-try{_= e?(new F([],m,c)):(new F(m,c))}catch{_=new Error(m,c);_._CyclepackError=f}
-s&&(_.stack=s);e&&(_.errors=e);return _
-})(v1,v2,{},v3,0)
-
+v1="Error\\n    at http://localhost:3000/js/build.js:17:17",
+v0=new ReferenceError("")
+v0.stack=v1
 return v0
 })()
     `.trim(),
     },
     {
       value: (() => {
-        const error = new Error('MESSAGE', { cause: 'CAUSE' })
+        const error = new RangeError('MESSAGE', { cause: 'CAUSE' })
         error.stack = stack
         return error
       })(),
       prepareErrors: void 0,
       encode:
-        'E1_2_3_4·tError·tMESSAGE·tCAUSE·tError\\n    at http://localhost:3000/js/build.js:17:17',
+        'E1_2_3_4_·tRangeError·tMESSAGE·tCAUSE·tError\\n    at http://localhost:3000/js/build.js:17:17',
       uneval: `
 (function() {
-var G="object";G=typeof globalThis===G?globalThis:typeof global===G?global:typeof window===G?window:typeof self===G?self:Function("return this")()||{}
 var
-v1="Error",
-v2="MESSAGE",
-v3="CAUSE",
-v4="Error\\n    at http://localhost:3000/js/build.js:17:17",
-v0=(function(f,m,c,s,e){
-var _,F=G[f]
-try{_= e?(new F([],m,c)):(new F(m,c))}catch{_=new Error(m,c);_._CyclepackError=f}
-s&&(_.stack=s);e&&(_.errors=e);return _
-})(v1,v2,{cause:v3},v4,0)
-
+v1="MESSAGE",
+v2="CAUSE",
+v3="Error\\n    at http://localhost:3000/js/build.js:17:17",
+v0=new RangeError("",{cause:1})
+v0.message=v1
+v0.cause=v2
+v0.stack=v3
 return v0
 })()
     `.trim(),
@@ -1042,84 +1028,54 @@ return v0
       })(),
       prepareErrors: void 0,
       encode:
-        'E1_2__3_4·tAggregateError·t·tError\\n    at http://localhost:3000/js/build.js:17:17·A2_5,6·1·2',
+        'E___1_2·tError\\n    at http://localhost:3000/js/build.js:17:17·tAggregateError',
       uneval: `
 (function() {
-var G="object";G=typeof globalThis===G?globalThis:typeof global===G?global:typeof window===G?window:typeof self===G?self:Function("return this")()||{}
 var
-v1="AggregateError",
-v2="",
-v3="Error\\n    at http://localhost:3000/js/build.js:17:17",
-v5=1,
-v6=2,
-v4=Array(2),
-v0=(function(f,m,c,s,e){
-var _,F=G[f]
-try{_= e?(new F([],m,c)):(new F(m,c))}catch{_=new Error(m,c);_._CyclepackError=f}
-s&&(_.stack=s);e&&(_.errors=e);return _
-})(v1,v2,{},v3,v4)
-v4[0]=v5
-v4[1]=v6
-return v0
-})()
-    `.trim(),
-    },
-    {
-      value: (() => {
-        const error = new CustomError1('123')
-        error.stack = stack
-        return error
-      })(),
-      prepareErrors: void 0,
-      encode:
-        'E1_2__3·tCustomError1·t123·tError\\n    at http://localhost:3000/js/build.js:17:17',
-      uneval: `
-(function() {
-var G="object";G=typeof globalThis===G?globalThis:typeof global===G?global:typeof window===G?window:typeof self===G?self:Function("return this")()||{}
-var
-v1="CustomError1",
-v2="123",
-v3="Error\\n    at http://localhost:3000/js/build.js:17:17",
-v0=(function(f,m,c,s,e){
-var _,F=G[f]
-try{_= e?(new F([],m,c)):(new F(m,c))}catch{_=new Error(m,c);_._CyclepackError=f}
-s&&(_.stack=s);e&&(_.errors=e);return _
-})(v1,v2,{},v3,0)
-
-return v0
-})()
-    `.trim(),
-    },
-    {
-      value: (() => {
-        class CustomError2 extends Error {}
-        const error = new CustomError2('123')
-        error.stack = stack
-        return error
-      })(),
-      prepareErrors: void 0,
-      encode:
-        'E1_2__3·tCustomError2·t123·tError\\n    at http://localhost:3000/js/build.js:17:17',
-      uneval: `
-(function() {
-var G="object";G=typeof globalThis===G?globalThis:typeof global===G?global:typeof window===G?window:typeof self===G?self:Function("return this")()||{}
-var
-v1="CustomError2",
-v2="123",
-v3="Error\\n    at http://localhost:3000/js/build.js:17:17",
-v0=(function(f,m,c,s,e){
-var _,F=G[f]
-try{_= e?(new F([],m,c)):(new F(m,c))}catch{_=new Error(m,c);_._CyclepackError=f}
-s&&(_.stack=s);e&&(_.errors=e);return _
-})(v1,v2,{},v3,0)
-
+v1="Error\\n    at http://localhost:3000/js/build.js:17:17",
+v2="AggregateError",
+v0=new Error("")
+v0.stack=v1
+v0.name=v2
 return v0
 })()
     `.trim(),
       decode: (() => {
-        const error = new Error('123')
+        const error = new Error()
         error.stack = stack
-        error._CyclepackError = 'CustomError2'
+        error.name = 'AggregateError'
+        return error
+      })(),
+    },
+    {
+      value: (() => {
+        class CustomError extends TypeError {
+          name = 'CustomError'
+        }
+        const error = new CustomError('123')
+        error.stack = stack
+        return error
+      })(),
+      prepareErrors: void 0,
+      encode:
+        'E1_2__3_4·tTypeError·t123·tError\\n    at http://localhost:3000/js/build.js:17:17·tCustomError',
+      uneval: `
+(function() {
+var
+v1="123",
+v2="Error\\n    at http://localhost:3000/js/build.js:17:17",
+v3="CustomError",
+v0=new TypeError("")
+v0.message=v1
+v0.stack=v2
+v0.name=v3
+return v0
+})()
+    `.trim(),
+      decode: (() => {
+        const error = new TypeError('123')
+        error.stack = stack
+        error.name = 'CustomError'
         return error
       })(),
     },

@@ -1,7 +1,6 @@
-export declare const ERROR_CLASSES: {
+export declare const ALLOWED_ERRORS: {
     __proto__: any;
     Error: number;
-    AggregateError: number;
     EvalError: number;
     RangeError: number;
     ReferenceError: number;

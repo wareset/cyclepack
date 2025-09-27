@@ -1,7 +1,7 @@
-export const ERROR_CLASSES = {
+export const ALLOWED_ERRORS = {
   __proto__: null,
   Error: 1,
-  AggregateError: 1,
+  // AggregateError: 1,
   EvalError: 1,
   RangeError: 1,
   ReferenceError: 1,

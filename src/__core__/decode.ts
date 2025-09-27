@@ -131,20 +131,14 @@ export default function decode(data: string, options?: DecodeOptions) {
                 s = parse(v[0])
                 prepareErrors && (s = prepareErrors(s))
               } else {
-                v[0] = parse(v[0])
-                v[1] = parse(v[1])
-                v[5] = v[2] ? { cause: 1 } : void 0
-                try {
-                  s = global[v[0]]
-                  s = v[4] ? new s([], v[1], v[5]) : new s(v[1], v[5])
-                } catch {
-                  s = new Error(v[1], v[5])
-                  s._CyclepackError = v[0]
-                }
-                temp[idx] = s
+                temp[idx] = s = new ((v[0] && global[parse(v[0])]) || Error)(
+                  '',
+                  v[2] ? { cause: 1 } : void 0
+                )
+                v[1] && (s.message = parse(v[1]))
                 v[2] && (s.cause = parse(v[2]))
                 v[3] && (s.stack = parse(v[3]))
-                v[4] && (s.errors = parse(v[4]))
+                v[4] && (s.name = parse(v[4]))
               }
               break
 

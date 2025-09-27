@@ -10,6 +10,7 @@ import {
   noopReturnFirst,
   fastCheckMapKey,
   isPrototypeLikeObject,
+  ALLOWED_ERRORS,
 } from './utils/others'
 
 function checkParsedKey(i: number) {
@@ -204,7 +205,8 @@ export default function encode(data: any, options?: EncodeOrUnevalOptions) {
                   break
 
                 // Errors
-                // case 'AggregateError':
+                // case 'SuppressedError': // not support
+                // case 'AggregateError': // not support
                 // case 'EvalError':
                 // case 'RangeError':
                 // case 'ReferenceError':
@@ -218,14 +220,15 @@ export default function encode(data: any, options?: EncodeOrUnevalOptions) {
                   } else if (n === void 0 || n === v) {
                     n =
                       'E' +
-                      parse(String(v.constructor.name), 1) +
+                      (type.name in ALLOWED_ERRORS ? parse(type.name, 1) : '') +
                       '_' +
-                      parse(String(v.message), 1) +
+                      (v.message !== '' ? parse(v.message, 1) : '') +
                       '_' +
                       ('cause' in v ? parse(v.cause, 1) : '') +
                       '_' +
-                      (v.stack ? parse(v.stack, 1) : '') +
-                      (v.errors ? '_' + parse(v.errors, 1) : '')
+                      ('stack' in v ? parse(v.stack, 1) : '') +
+                      '_' +
+                      (v.name in ALLOWED_ERRORS ? '' : parse(v.name, 1))
                   } else {
                     n = 'E' + parse(n, 1, 1)
                   }
