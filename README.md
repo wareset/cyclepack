@@ -791,10 +791,10 @@ const data = {
   vec: new Vector2D(21, 42),
 }
 
-const str = data.encode(data, options)
+const str = cyclepack.encode(data, options)
 // O1_2:1,9:3·A42·tarr·G8_5:4,7:6·21·tx·42·ty·tVector2D·tvec
 
-const obj = data.decode(str)
+const obj = cyclepack.decode(str)
 // Результат:
 // CustomArray будет интерпретироваться как обычный массив,
 // так как наследуется от стандартного массива и 'cyclepack'
@@ -1067,10 +1067,10 @@ const data = {
   err_3: new AggregateError([1, 2], '!!!'),
 }
 
-const str = data.encode(data, options)
+const str = cyclepack.encode(data, options)
 // O1_6:1,13:7,18:14·E2_3_4_5_·tRangeError·tHello·1·tRangeError: Hello\n    at http://localhost:3000/js/build.js:25:12\n    at http://localhost:3000/js/build.js:41:3·terr_1·E8_9_10_11_12·tTypeError·tworld·2·tCustomSuperError: world\n    at http://localhost:3000/js/build.js:26:12\n    at http://localhost:3000/js/build.js:41:3·tCustomSuperError·terr_2·E_15__16_17·t!!!·tAggregateError: !!!\n    at http://localhost:3000/js/build.js:27:12\n    at http://localhost:3000/js/build.js:41:3·tAggregateError·terr_3
 
-const obj = data.decode(str)
+const obj = cyclepack.decode(str)
 // Результат:
 // `cyclepack` сохраняет 'name', 'message', 'cause' и 'stack',
 // и пытается восстановить объект ошибки идентично оригиналу.
