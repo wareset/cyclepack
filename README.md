@@ -464,7 +464,7 @@ return v0
 ```js
 import * as cyclepack from 'cyclepack'
 
-const my_super_fn = () => {}
+function my_super_fn() {}
 
 const data = {
   fn_1: my_super_fn,
@@ -523,7 +523,7 @@ obj_2 == { fn_1: my_super_fn }
 ```js
 import * as cyclepack from 'cyclepack'
 
-const my_super_fn = () => {}
+function my_super_fn() {}
 
 const data = {
   fn_1: my_super_fn,
