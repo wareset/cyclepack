@@ -1195,6 +1195,28 @@ const str = cyclepack.encode(array)
 
 const obj = cyclepack.decode(str)
 // obj == [' ', index: 4, input: 'some string', groups: undefined]
+
+const forEval = cyclepack.uneval(data)
+// Результат:
+eval(forEval) == obj
+/*
+(function() {
+var
+v1=" ",
+v2=4,
+v3="index",
+v4="some string",
+v5="input",
+v6=void 0,
+v7="groups",
+v0=Array(1)
+v0[0]=v1
+v0[v3]=v2
+v0[v5]=v4
+v0[v7]=v6
+return v0
+})()
+*/
 ```
 
 Все дополнительные свойства (`index`, `input`, `groups`) для массива, так же были сохранены. Поскольку добавление нецелочисленных ключей в массив является частой практикой, что даже подтверждается примером выше.
