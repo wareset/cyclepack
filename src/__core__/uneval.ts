@@ -261,13 +261,21 @@ function n(v){return new CyclepackClass[v]()}`
                   if (n === null) {
                     n = NaN
                   } else if (n === void 0 || n === v) {
-                    n = `new ${type.name in ALLOWED_ERRORS ? type.name : 'Error'}(${'cause' in v ? `"",{cause:1}` : '""'})`
+                    n =
+                      'new ' +
+                      (type.name in ALLOWED_ERRORS ? type.name : 'Error') +
+                      ('cause' in v ? `("",{cause:1})` : '("")')
+
                     v.message === '' ||
                       listValues.push(`${idx}.message=${parse(v.message, 1)}`)
-                    'cause' in v &&
+
+                    if ('cause' in v && v.cause !== 1)
                       listValues.push(`${idx}.cause=${parse(v.cause, 1)}`)
-                    'stack' in v &&
-                      listValues.push(`${idx}.stack=${parse(v.stack, 1)}`)
+
+                    listValues.push(
+                      `${idx}.stack=${'stack' in v ? parse(v.stack, 1) : '""'}`
+                    )
+                    
                     v.name in ALLOWED_ERRORS ||
                       listValues.push(`${idx}.name=${parse(v.name, 1)}`)
                   } else if (typeof n !== 'string') {

@@ -141,7 +141,7 @@ export default function decode(data: string, options?: DecodeOptions) {
                   )
                   v[1] && (s.message = parse(v[1]))
                   v[2] && (s.cause = parse(v[2]))
-                  v[3] && (s.stack = parse(v[3]))
+                  s.stack = v[3] ? parse(v[3]) : ''
                   v[4] && (s.name = parse(v[4]))
                 }
                 break
