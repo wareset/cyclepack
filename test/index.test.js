@@ -980,46 +980,60 @@ return v0
     },
     {
       value: (() => {
-        const error = new ReferenceError()
-        error.stack = stack
-        return error
+        const res = [
+          new Error('mess', { cause: 1 }),
+          new EvalError('mess', { cause: 1 }),
+          new RangeError('mess', { cause: 1 }),
+          new ReferenceError('mess', { cause: 1 }),
+          new SyntaxError('mess', { cause: 1 }),
+          new TypeError('mess', { cause: 1 }),
+          new URIError('mess', { cause: 1 }),
+        ]
+
+        for (const err of res) err.stack = stack
+        return res
       })(),
       prepareErrors: void 0,
-      encode:
-        'E1___2_·tReferenceError·tError\\n    at http://localhost:3000/js/build.js:17:17',
+      encode: `A7_1,6,8,10,12,14,16·E2_3_4_5_·tError·tmess·1·tError\\n    at http://localhost:3000/js/build.js:17:17·E7_3_4_5_·tEvalError·E9_3_4_5_·tRangeError·E11_3_4_5_·tReferenceError·E13_3_4_5_·tSyntaxError·E15_3_4_5_·tTypeError·E17_3_4_5_·tURIError`,
       uneval: `
 (function() {
 var
-v1="Error\\n    at http://localhost:3000/js/build.js:17:17",
-v0=new ReferenceError("")
-v0.stack=v1
-return v0
-})()
-    `.trim(),
-    },
-    {
-      value: (() => {
-        const error = new RangeError('MESSAGE', { cause: 'CAUSE' })
-        error.stack = stack
-        return error
-      })(),
-      prepareErrors: void 0,
-      encode:
-        'E1_2_3_4_·tRangeError·tMESSAGE·tCAUSE·tError\\n    at http://localhost:3000/js/build.js:17:17',
-      uneval: `
-(function() {
-var
-v1="MESSAGE",
-v2="CAUSE",
+v2="mess",
 v3="Error\\n    at http://localhost:3000/js/build.js:17:17",
-v0=new RangeError("",{cause:1})
-v0.message=v1
-v0.cause=v2
-v0.stack=v3
+v1=new Error("",{cause:1}),
+v4=new EvalError("",{cause:1}),
+v5=new RangeError("",{cause:1}),
+v6=new ReferenceError("",{cause:1}),
+v7=new SyntaxError("",{cause:1}),
+v8=new TypeError("",{cause:1}),
+v9=new URIError("",{cause:1}),
+v0=Array(7)
+v1.message=v2
+v1.stack=v3
+v0[0]=v1
+v4.message=v2
+v4.stack=v3
+v0[1]=v4
+v5.message=v2
+v5.stack=v3
+v0[2]=v5
+v6.message=v2
+v6.stack=v3
+v0[3]=v6
+v7.message=v2
+v7.stack=v3
+v0[4]=v7
+v8.message=v2
+v8.stack=v3
+v0[5]=v8
+v9.message=v2
+v9.stack=v3
+v0[6]=v9
 return v0
 })()
     `.trim(),
     },
+
     {
       value: (() => {
         const error = new AggregateError([1, 2])
