@@ -361,7 +361,7 @@ const data = {
 
   const obj = cyclepack.decode(str)
   // Результат:
-  obj == { not_empty: [1] }
+  obj == { not_empty: 1 }
 
   const forEval = cyclepack.uneval(data, options)
   // Результат:
