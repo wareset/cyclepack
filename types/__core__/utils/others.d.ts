@@ -16,3 +16,4 @@ export declare function getObjectName(obj: any): any;
 export declare function getGlobalThis(): any;
 export declare function isPrototypeLikeObject(prototype: any): boolean;
 export declare function fastCheckMapKey(key: any, prepareFunctions: any, prepareClasses: any, prepareErrors: any): any;
+export declare function validateOptionsFns(v: any): any;

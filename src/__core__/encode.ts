@@ -11,6 +11,7 @@ import {
   fastCheckMapKey,
   isPrototypeLikeObject,
   ALLOWED_ERRORS,
+  validateOptionsFns,
 } from './utils/others'
 
 function checkParsedKey(i: number) {
@@ -32,9 +33,9 @@ export default function encode(data: any, options?: EncodeOrUnevalOptions) {
   let allowAllDeep = 0
   const allowArrayHoles = !options.removeArrayHoles
   const allowEmptyObjects = !options.removeEmptyObjects
-  const prepareFunctions = options.prepareFunctions
-  const prepareClasses = options.prepareClasses
-  const prepareErrors = options.prepareErrors
+  const prepareFunctions = validateOptionsFns(options.prepareFunctions)
+  const prepareClasses = validateOptionsFns(options.prepareClasses)
+  const prepareErrors = validateOptionsFns(options.prepareErrors)
 
   function getSymbols(o: any) {
     const res: string[] = []

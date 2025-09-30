@@ -10,6 +10,7 @@ import {
   fastCheckMapKey,
   isPrototypeLikeObject,
   ALLOWED_ERRORS,
+  validateOptionsFns,
 } from './utils/others'
 
 // function setId(num: number): string {
@@ -54,9 +55,9 @@ export default function uneval(data: any, options?: EncodeOrUnevalOptions) {
   let allowAllDeep = 0
   const allowArrayHoles = !options.removeArrayHoles
   const allowEmptyObjects = !options.removeEmptyObjects
-  const prepareFunctions = options.prepareFunctions
-  const prepareClasses = options.prepareClasses
-  const prepareErrors = options.prepareErrors
+  const prepareFunctions = validateOptionsFns(options.prepareFunctions)
+  const prepareClasses = validateOptionsFns(options.prepareClasses)
+  const prepareErrors = validateOptionsFns(options.prepareErrors)
 
   let CyclepackClass: any
   function createClass(type: string, short: string) {
