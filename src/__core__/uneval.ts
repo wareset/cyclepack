@@ -73,7 +73,7 @@ function n(v){return new CyclepackClass[v]()}`
       const escType = (CyclepackClass[type] = `"${stringEncode(type)}"`)
       const className = `CyclepackClass[${escType}]`
       listClassesAndGlobal.push(
-        `${className}||c(${className}=function(){},${escType})`
+        `if(!${className})c(${className}=function(){},${escType})`
       )
     }
     return `n(${short})`

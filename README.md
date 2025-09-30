@@ -824,7 +824,7 @@ var G="object";G=typeof globalThis===G?globalThis:typeof global===G?global:typeo
 var CyclepackClass=G.CyclepackClass||(G.CyclepackClass=Object.create(null))
 function c(f,v){Object.defineProperty(f.prototype,"_CyclepackClass",{value:v})}
 function n(v){return new CyclepackClass[v]()}
-CyclepackClass["Vector2D"]||c(CyclepackClass["Vector2D"]=function(){},"Vector2D")
+if(!CyclepackClass["Vector2D"])c(CyclepackClass["Vector2D"]=function(){},"Vector2D")
 var
 v1=Array(42),
 v2="arr",

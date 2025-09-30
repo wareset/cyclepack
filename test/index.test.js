@@ -1184,7 +1184,7 @@ var G="object";G=typeof globalThis===G?globalThis:typeof global===G?global:typeo
 var CyclepackClass=G.CyclepackClass||(G.CyclepackClass=Object.create(null))
 function c(f,v){Object.defineProperty(f.prototype,"_CyclepackClass",{value:v})}
 function n(v){return new CyclepackClass[v]()}
-CyclepackClass["CustomClass"]||c(CyclepackClass["CustomClass"]=function(){},"CustomClass")
+if(!CyclepackClass["CustomClass"])c(CyclepackClass["CustomClass"]=function(){},"CustomClass")
 var
 v1=1,
 v2="q",
@@ -1210,8 +1210,8 @@ var G="object";G=typeof globalThis===G?globalThis:typeof global===G?global:typeo
 var CyclepackClass=G.CyclepackClass||(G.CyclepackClass=Object.create(null))
 function c(f,v){Object.defineProperty(f.prototype,"_CyclepackClass",{value:v})}
 function n(v){return new CyclepackClass[v]()}
-CyclepackClass["CustomClass"]||c(CyclepackClass["CustomClass"]=function(){},"CustomClass")
-CyclepackClass["CustomClass_2"]||c(CyclepackClass["CustomClass_2"]=function(){},"CustomClass_2")
+if(!CyclepackClass["CustomClass"])c(CyclepackClass["CustomClass"]=function(){},"CustomClass")
+if(!CyclepackClass["CustomClass_2"])c(CyclepackClass["CustomClass_2"]=function(){},"CustomClass_2")
 var
 v2=1,
 v3="q",
@@ -1247,7 +1247,7 @@ var G="object";G=typeof globalThis===G?globalThis:typeof global===G?global:typeo
 var CyclepackClass=G.CyclepackClass||(G.CyclepackClass=Object.create(null))
 function c(f,v){Object.defineProperty(f.prototype,"_CyclepackClass",{value:v})}
 function n(v){return new CyclepackClass[v]()}
-CyclepackClass["CustomClass"]||c(CyclepackClass["CustomClass"]=function(){},"CustomClass")
+if(!CyclepackClass["CustomClass"])c(CyclepackClass["CustomClass"]=function(){},"CustomClass")
 var
 v2=1,
 v3="q",
