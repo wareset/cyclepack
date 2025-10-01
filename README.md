@@ -34,7 +34,7 @@ parse @ build.js:233
 
 То есть, при упаковке данных, даже если случайно в них окажется `Symbol`, `devalue` упакует их без каких-либо предупреждений. Но, при попытке распаковать эти данные, всё упадёт.
 
-Так же, все подобные библиотеки (включая `devalue`) собирают не все данные. Например, собирают не все ключи массива, но об этом будет отдельно в конце.
+Так же, все подобные библиотеки собирают не все данные. Например, собирают не все ключи массива, но об этом будет отдельно в конце.
 
 Именно поэтому и приходится писать собственные решения.
 
@@ -57,23 +57,26 @@ package.json
 ```js
 import * as cyclepack from 'cyclepack'
 
-// Создадим объект с прототипом
+// Создадим объект со своим прототипом
+
+// это будет прототип объекта:
 const proto = { a: 1 }
+// это пример рекурсии:
 proto.self = proto
 
 const object = Object.create(proto)
 object.b = 2
 object[Symbol.for('123')] = 123
 
-// наш объект
+// наш объект:
 const data = object
 
-// упаковываем его в строку
+// упаковываем его в строку:
 const str = cyclepack.encode(data)
 console.log(str)
 // P1_6:5,8:7·O1_3:2,4:1·1·ta·tself·2·tb·123·k7
 
-// возвращаем из строки первоначальный объект
+// превращаем строку выше в первоначальный объект:
 const obj = cyclepack.decode(str)
 
 // obj и data будут полностью идентичны
@@ -83,7 +86,7 @@ assert.deepStrictEqual(obj, data)
 // будет использоваться такая форма записи:
 obj == data
 
-// превратим объект в исполняемый код
+// превратим объект в исполняемый код:
 const forEval = cyclepack.uneval(data)
 eval(forEval) == data
 console.log(forEval)
@@ -427,6 +430,7 @@ const options = {
   prepareFunctions: () => void 0,
   prepareFunctions: () => null,
   prepareFunctions: (fn) => fn,
+  prepareFunctions: 42, // или любое другое значение
 }
 
 const data = {
@@ -603,6 +607,7 @@ const options = {
   // и любой нестандартный объект будет исключён:
   prepareClasses: null,
   prepareClasses: () => null,
+  prepareClasses: 42, // или любое другое значение
 }
 
 class CustomClass {}
@@ -864,6 +869,7 @@ const options = {
   // и любой объект ошибки будет исключён:
   prepareErrors: null,
   prepareErrors: () => null,
+  prepareErrors: 42, // или любое другое значение
 }
 
 class CustomError extends Error {}

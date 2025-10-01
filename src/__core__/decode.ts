@@ -2,7 +2,7 @@ import { DecodeOptions } from './types'
 import {
   __String__ as String,
   getGlobalThis,
-  validateOptionsFns,
+  validatePrepareFns,
 } from './utils/others'
 import { base64ToArrayBuffer } from './utils/base64'
 import { stringEncode, stringDecode } from './utils/string'
@@ -43,9 +43,9 @@ export default function decode(data: string, options?: DecodeOptions) {
     data = data.split('·') as any
     if (data.length) {
       options || (options = {})
-      const prepareFunctions = validateOptionsFns(options.prepareFunctions)
-      const prepareClasses = validateOptionsFns(options.prepareClasses)
-      const prepareErrors = validateOptionsFns(options.prepareErrors)
+      const prepareFunctions = validatePrepareFns(options.prepareFunctions)
+      const prepareClasses = validatePrepareFns(options.prepareClasses)
+      const prepareErrors = validatePrepareFns(options.prepareErrors)
 
       const global = getGlobalThis()
       const objectCreate = Object.create

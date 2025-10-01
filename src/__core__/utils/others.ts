@@ -110,7 +110,6 @@ export function fastCheckMapKey(
   return res
 }
 
-export function validateOptionsFns(v: any) {
-  if (v != null && typeof v !== 'function') throw 'Invalid option'
-  return v
+export function validatePrepareFns(v: any) {
+  return v == null || typeof v === 'function' ? v : null
 }
