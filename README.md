@@ -1195,14 +1195,25 @@ return v0
 import * as cyclepack from 'cyclepack'
 
 const array = /\s/.exec('some string') // получаем массив
+array['some_key'] = 42
 
 const str = cyclepack.encode(array)
-// A1_1,3:2,5:4,7:6·t ·3·tindex·tqwe asd·tinput·u·tgroups
+// A1_1,3:2,5:4,7:6,9:8·t ·4·tindex·tsome string·tinput·u·tgroups·42·tsome_key
 
 const obj = cyclepack.decode(str)
-// obj == [' ', index: 4, input: 'some string', groups: undefined]
+// Результат:
+/*
+obj == 
+  [
+    ' ',
+    index: 4,
+    input: 'some string',
+    groups: undefined,
+    some_key: 42
+  ]
+*/
 
-const forEval = cyclepack.uneval(data)
+const forEval = cyclepack.uneval(array)
 // Результат:
 eval(forEval) == obj
 /*
@@ -1215,19 +1226,22 @@ v4="some string",
 v5="input",
 v6=void 0,
 v7="groups",
+v8=42,
+v9="some_key",
 v0=Array(1)
 v0[0]=v1
 v0[v3]=v2
 v0[v5]=v4
 v0[v7]=v6
+v0[v9]=v8
 return v0
 })()
 */
 ```
 
-Все дополнительные свойства (`index`, `input`, `groups`) для массива, так же были сохранены. Поскольку добавление нецелочисленных ключей в массив является частой практикой, что даже подтверждается примером выше.
+Все дополнительные ключи (`index`, `input`, `groups` и добавленный `some_key`) для массива, так же были сохранены. Поскольку добавление нецелочисленных ключей в массив является частой практикой, что даже подтверждается выше на примере вывода метода `exec`.
 
-То есть `Array` и `Object` обрабатываются одинаково, а все остальные объекты - в соответствии со спецификой своей работы. Например:
+То есть `Array` и `Object` обрабатываются одинаково, а вот все остальные объекты - в соответствии со спецификой своей работы. Например:
 
 ```js
 import * as cyclepack from 'cyclepack'
